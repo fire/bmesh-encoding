@@ -3,19 +3,6 @@ EXT_bmesh_encoding Blender Addon
 Preserves mesh topology during glTF export/import operations.
 """
 
-bl_info = {
-    "name": "EXT_bmesh_encoding",
-    "author": "EXT_bmesh_encoding Team",
-    "version": (1, 0, 0),
-    "blender": (4, 0, 0),
-    "location": "File > Import/Export",
-    "description": "Preserve mesh topology during glTF export/import using EXT_bmesh_encoding",
-    "warning": "",
-    "doc_url": "",
-    "support": "COMMUNITY",
-    "category": "Import-Export",
-}
-
 import bpy
 from . import gltf_extension
 

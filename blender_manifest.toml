@@ -4,7 +4,7 @@ schema_version = "1.0.0"
 
 # Addon Information
 id = "ext_bmesh_encoding"
-version = "1.0.0"
+version = "1.1.0"
 name = "EXT_bmesh_encoding"
 tagline = "Preserve mesh topology during glTF export/import"
 maintainer = "EXT_bmesh_encoding Team"
@@ -35,7 +35,7 @@ tags = ["Import-Export", "Mesh", "glTF", "VRM"]
 license = ["MIT"]
 
 # Website
-website = ""
+website = "https://github.com/fire/bmesh-encoding"
 
 # Permissions (none required)
 # permissions = []
