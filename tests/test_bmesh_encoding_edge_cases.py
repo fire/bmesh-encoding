@@ -376,8 +376,9 @@ def test_degenerate_geometry_handling(edge_case_setup):
         assert isinstance(encoded_data, dict), "Should return dictionary"
 
     # Cleanup
+    mesh_data = obj.data  # Store reference before removing object
     bpy.data.objects.remove(obj)
-    bpy.data.meshes.remove(obj.data)
+    bpy.data.meshes.remove(mesh_data)
 
 
 def test_separate_island_mesh(edge_case_setup):

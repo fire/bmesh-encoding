@@ -181,8 +181,9 @@ def test_ext_bmesh_encoding_extension_in_output(vrm0_test_setup):
     assert found_extension, "EXT_bmesh_encoding should be present in mesh primitives"
 
     # Cleanup
+    mesh_data = obj.data  # Store reference before removing object
     bpy.data.objects.remove(obj)
-    bpy.data.meshes.remove(obj.data)
+    bpy.data.meshes.remove(mesh_data)
 
 def test_ext_bmesh_encoding_disabled_behavior(vrm0_test_setup):
     """Test that EXT_bmesh_encoding extension does not appear when disabled."""
@@ -219,8 +220,9 @@ def test_ext_bmesh_encoding_disabled_behavior(vrm0_test_setup):
                     "EXT_bmesh_encoding should not be in primitive extensions when disabled"
 
     # Cleanup
+    mesh_data = obj.data  # Store reference before removing object
     bpy.data.objects.remove(obj)
-    bpy.data.meshes.remove(obj.data)
+    bpy.data.meshes.remove(mesh_data)
 
 def test_bmesh_encoding_fidelity_cube(vrm0_test_setup):
     """Test encoding/decoding fidelity for a simple cube mesh."""

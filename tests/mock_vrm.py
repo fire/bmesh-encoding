@@ -19,10 +19,34 @@ class MockParseResult:
 
 
 def mock_parse_glb(glb_data: bytes) -> tuple:
-    """Mock glTF binary parsing function."""
-    # Simple mock - just return empty dict and empty binary
-    # In real implementation, this would parse the glTF binary format
-    return {}, b''
+    """Mock glTF binary parsing function that actually parses the mock glTF data."""
+    try:
+        # Parse the glTF binary format created by MockVrm0Exporter
+        if len(glb_data) < 12:
+            return {}, b''
+
+        # Check glTF header
+        if glb_data[:4] != b'glTF':
+            return {}, b''
+
+        # Read JSON chunk
+        json_start = 12  # After header
+        if len(glb_data) < json_start + 8:
+            return {}, b''
+
+        json_length = int.from_bytes(glb_data[json_start:json_start + 4], 'little')
+        json_data = glb_data[json_start + 8:json_start + 8 + json_length]
+
+        # Parse JSON
+        json_str = json_data.decode('utf-8')
+        gltf_dict = json.loads(json_str)
+
+        return gltf_dict, b''  # No binary data in our simple mock
+
+    except Exception as e:
+        # Fallback to empty data if parsing fails
+        print(f"Mock glTF parsing failed: {e}")
+        return {}, b''
 
 
 class MockOps:
@@ -58,7 +82,7 @@ class MockVrm0Exporter:
         self.original_mesh_topology = {}
 
     def export_vrm(self):
-        """Mock VRM export - returns mock glTF binary data."""
+        """Mock VRM export - returns mock glTF binary data with proper EXT_bmesh_encoding integration."""
         # Create a simple mock glTF structure
         gltf_data = {
             "asset": {"version": "2.0"},
@@ -69,13 +93,26 @@ class MockVrm0Exporter:
 
         # Add EXT_bmesh_encoding if enabled
         if self.export_ext_bmesh_encoding:
-            gltf_data["extensionsUsed"] = ["EXT_bmesh_encoding"]
-            gltf_data["meshes"][0]["primitives"][0]["extensions"] = {
-                "EXT_bmesh_encoding": {
-                    "faceLoopIndices": [0, 1, 2, 3],
-                    "faceCounts": [4]
-                }
+            # Add to extensionsUsed
+            if "extensionsUsed" not in gltf_data:
+                gltf_data["extensionsUsed"] = []
+            if "EXT_bmesh_encoding" not in gltf_data["extensionsUsed"]:
+                gltf_data["extensionsUsed"].append("EXT_bmesh_encoding")
+
+            # Add mock extension data to mesh primitive (avoiding bytearray serialization issues)
+            if "extensions" not in gltf_data["meshes"][0]["primitives"][0]:
+                gltf_data["meshes"][0]["primitives"][0]["extensions"] = {}
+
+            # Create simplified mock extension data that can be JSON serialized
+            gltf_data["meshes"][0]["primitives"][0]["extensions"]["EXT_bmesh_encoding"] = {
+                "vertices": {"count": 8},
+                "edges": {"count": 12},
+                "loops": {"count": 24},
+                "faces": {"count": 6}
             }
+
+            # Set mesh name for identification
+            gltf_data["meshes"][0]["name"] = self.objects[0].data.name if self.objects else "TestMesh"
 
         # Convert to JSON and add glTF header
         json_str = json.dumps(gltf_data, separators=(',', ':'))

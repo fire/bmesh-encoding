@@ -449,10 +449,14 @@ def test_multiple_roundtrip_cycles(roundtrip_setup):
     current_mesh = obj.data
     current_obj = obj
 
+    # Store original mesh for comparison
+    original_mesh = current_mesh.copy()
+    original_mesh.name = "OriginalMultiCycle"
+
     # Perform multiple rounds of encode/decode
     cycles = 3
     for cycle in range(cycles):
-        # Store current state
+        # Store current state before encoding
         cycle_mesh = current_mesh.copy()
         cycle_mesh.name = f"Cycle{cycle}"
 
@@ -493,6 +497,10 @@ def test_multiple_roundtrip_cycles(roundtrip_setup):
         pass  # Object already removed
     try:
         bpy.data.meshes.remove(current_mesh)
+    except ReferenceError:
+        pass  # Mesh already removed
+    try:
+        bpy.data.meshes.remove(original_mesh)
     except ReferenceError:
         pass  # Mesh already removed
 

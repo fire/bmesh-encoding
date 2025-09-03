@@ -454,6 +454,10 @@ class TestEndToEndImportExport:
         obj = create_triangle_mesh("TriangleTest")
         original_mesh = obj.data.copy()
 
+        # Make sure the object is selected for export
+        bpy.context.view_layer.objects.active = obj
+        obj.select_set(True)
+
         # Export to glTF with EXT_bmesh_encoding
         with tempfile.NamedTemporaryFile(suffix='.gltf', delete=False) as tmp_file:
             filepath = tmp_file.name
@@ -472,15 +476,28 @@ class TestEndToEndImportExport:
             # Import the glTF file
             bpy.ops.import_scene.gltf(filepath=filepath)
 
-            # Find imported object
+            # Find imported object - look for the specific mesh we just imported
             imported_obj = None
+            expected_name = "TriangleTest"  # The original name we used
+
+            # First try to find by exact name match
             for obj in bpy.context.scene.objects:
-                if obj.type == 'MESH':
+                if obj.type == 'MESH' and (obj.name == expected_name or obj.name.startswith(expected_name)):
                     imported_obj = obj
                     break
 
-            assert imported_obj is not None, "Imported object not found"
+            # If not found, look for any recently imported mesh
+            if imported_obj is None:
+                for obj in bpy.context.scene.objects:
+                    if obj.type == 'MESH' and obj.name != "DegenerateTest":  # Avoid leftover test objects
+                        imported_obj = obj
+                        break
+
+            assert imported_obj is not None, f"Imported triangle object not found. Available meshes: {[obj.name for obj in bpy.context.scene.objects if obj.type == 'MESH']}"
             imported_mesh = imported_obj.data
+
+            # Verify we got the right mesh (should have 3 vertices for a triangle)
+            assert len(imported_mesh.vertices) == 3, f"Expected triangle mesh with 3 vertices, got {len(imported_mesh.vertices)} vertices in mesh '{imported_obj.name}'"
 
             # Compare topology
             assert compare_mesh_topology(original_mesh, imported_mesh)
