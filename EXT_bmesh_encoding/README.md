@@ -407,7 +407,7 @@ The following BMesh structures are preserved through property table encoding:
 
 - **Vertices**: Two vertex references stored as `vertex0`, `vertex1` properties
 - **Adjacent Faces**: Variable-length face index arrays in `adjacentFaces` property
-- **Manifold Status**: Single byte flag in `manifoldStatus` property compatible with EXT_mesh_manifold
+- **Manifold Status**: Single byte flag in `manifoldStatus` property
   - `0`: Confirmed non-manifold
   - `1`: Confirmed manifold (oriented 2-manifold)
   - `255`: Unknown status (no manifold checking performed)
