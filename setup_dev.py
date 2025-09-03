@@ -117,11 +117,19 @@ def run_tests():
         ['uv', 'run', 'python', '-m', 'pytest', 'test_extension_hooks.py', '-v']
     ]
 
+    # Add Blender-based tests if Blender is available
+    blender_path = os.environ.get('BLENDER_PATH', '/usr/bin/blender')
+    if os.path.exists(blender_path):
+        test_commands.extend([
+            [blender_path, '--background', '--python', 'test_topology_validation.py'],
+            [blender_path, '--background', '--python', 'test_blender_integration.py']
+        ])
+
     results = []
     for cmd in test_commands:
         print(f"\n🔄 Running: {' '.join(cmd)}")
         try:
-            result = subprocess.run(cmd, timeout=30)
+            result = subprocess.run(cmd, timeout=60)  # Increased timeout for Blender tests
             success = result.returncode == 0
             results.append(success)
             status = "✅ PASS" if success else "❌ FAIL"
@@ -132,6 +140,13 @@ def run_tests():
 
     overall_success = all(results)
     print(f"\n📊 Test Results: {'✅ ALL PASSED' if overall_success else '❌ SOME FAILED'}")
+
+    if not overall_success:
+        print("\n🔍 Test Failure Analysis:")
+        print("   • If topology tests fail: EXT_bmesh_encoding is not preserving quads/ngons")
+        print("   • If extension validation fails: Addon hooks are not being called")
+        print("   • If Blender tests timeout: Blender installation or path issues")
+
     return overall_success
 
 

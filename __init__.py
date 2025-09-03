@@ -6,6 +6,18 @@ Preserves mesh topology during glTF export/import operations.
 # Module version
 __version__ = "1.1.0"
 
+# Import and expose glTF extension classes for glTF-Blender-IO auto-discovery
+try:
+    from .gltf_extension import glTF2ImportUserExtension, glTF2ExportUserExtension
+    print("EXT_bmesh_encoding: Extension classes imported successfully")
+except ImportError as e:
+    print(f"EXT_bmesh_encoding: Failed to import extension classes: {e}")
+    # Create dummy classes to prevent crashes
+    class glTF2ImportUserExtension:
+        pass
+    class glTF2ExportUserExtension:
+        pass
+
 # Blender addon registration functions
 # These are called by Blender when enabling/disabling the addon
 def register():
