@@ -170,17 +170,16 @@ def create_degenerate_geometry_mesh(name="DegenerateMesh"):
     except ValueError:
         pass  # Expected to fail with degenerate geometry
 
-    # Very thin triangle (near-collinear)
+    # Very thin triangle - add vertices first
+    verts.append(bm.verts.new((2, 0, 0)))        # 4
+    verts.append(bm.verts.new((2.0001, 0, 0)))   # 5 - very close to 4
+    verts.append(bm.verts.new((2.00005, 0.1, 0))) # 6
+
+    # Now create the very thin triangle
     try:
         bm.faces.new([verts[4], verts[5], verts[6]])  # Very thin triangle
     except ValueError:
         pass  # May fail with very thin geometry
-
-    # Very thin triangle
-    verts.append(bm.verts.new((2, 0, 0)))        # 4
-    verts.append(bm.verts.new((2.0001, 0, 0)))   # 5 - very close to 4
-    verts.append(bm.verts.new((2.00005, 0.1, 0))) # 6
-    bm.faces.new([verts[4], verts[5], verts[6]])   # Very thin triangle
 
     bm.to_mesh(mesh)
     bm.free()
@@ -392,8 +391,9 @@ def test_separate_island_mesh(edge_case_setup):
     assert isinstance(encoded_data, dict), "Should return dictionary"
 
     # Cleanup
+    mesh_data = obj.data  # Store reference before removing object
     bpy.data.objects.remove(obj)
-    bpy.data.meshes.remove(obj.data)
+    bpy.data.meshes.remove(mesh_data)
 
 
 def test_nested_hierarchy_mesh(edge_case_setup):
@@ -408,8 +408,9 @@ def test_nested_hierarchy_mesh(edge_case_setup):
         assert isinstance(encoded_data, dict), "Should return dictionary"
 
     # Cleanup
+    mesh_data = obj.data  # Store reference before removing object
     bpy.data.objects.remove(obj)
-    bpy.data.meshes.remove(obj.data)
+    bpy.data.meshes.remove(mesh_data)
 
 
 def test_extremely_dense_mesh(edge_case_setup):
@@ -424,8 +425,9 @@ def test_extremely_dense_mesh(edge_case_setup):
         assert isinstance(encoded_data, dict), "Should return dictionary"
 
     # Cleanup
+    mesh_data = obj.data  # Store reference before removing object
     bpy.data.objects.remove(obj)
-    bpy.data.meshes.remove(obj.data)
+    bpy.data.meshes.remove(mesh_data)
 
 def test_mixed_face_types_extensive(edge_case_setup):
     """Test mesh with extensive mixture of different face types."""
@@ -493,8 +495,9 @@ def test_mixed_face_types_extensive(edge_case_setup):
         assert isinstance(encoded_data, dict), "Should return dictionary"
 
     # Cleanup
+    mesh_data = obj.data  # Store reference before removing object
     bpy.data.objects.remove(obj)
-    bpy.data.meshes.remove(obj.data)
+    bpy.data.meshes.remove(mesh_data)
 
 def test_mesh_with_transformations(edge_case_setup):
     """Test encoding with mesh that has non-identity transformations."""
@@ -515,8 +518,9 @@ def test_mesh_with_transformations(edge_case_setup):
     assert isinstance(encoded_data, dict), "Should return dictionary"
 
     # Cleanup
+    mesh_data = obj.data  # Store reference before removing object
     bpy.data.objects.remove(obj)
-    bpy.data.meshes.remove(obj.data)
+    bpy.data.meshes.remove(mesh_data)
 
 
 def test_mesh_with_multiple_uv_layers(edge_case_setup):
@@ -564,8 +568,9 @@ def test_mesh_with_multiple_uv_layers(edge_case_setup):
     assert isinstance(encoded_data, dict), "Should return dictionary"
 
     # Cleanup
+    mesh_data = obj.data  # Store reference before removing object
     bpy.data.objects.remove(obj)
-    bpy.data.meshes.remove(obj.data)
+    bpy.data.meshes.remove(mesh_data)
 
 def test_error_handling_corrupted_data(edge_case_setup):
     """Test error handling with potentially corrupted or incomplete data."""
@@ -631,8 +636,9 @@ def test_memory_usage_large_complex_mesh(edge_case_setup):
         assert encode_time < 1.0, f"Encoding too slow: {encode_time:.3f}s"
 
     # Cleanup
+    mesh_data = obj.data  # Store reference before removing object
     bpy.data.objects.remove(obj)
-    bpy.data.meshes.remove(obj.data)
+    bpy.data.meshes.remove(mesh_data)
 
 
 if __name__ == "__main__":

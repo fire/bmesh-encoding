@@ -281,14 +281,9 @@ def test_roundtrip_simple_cube(roundtrip_setup):
     compare_mesh_geometry(original_mesh, decoded_mesh)
 
     # Cleanup
-    try:
-        bpy.data.objects.remove(obj)
-    except ReferenceError:
-        pass  # Object already removed
-    try:
-        bpy.data.meshes.remove(obj.data)
-    except ReferenceError:
-        pass  # Mesh already removed
+    mesh_data = obj.data  # Store reference before removing object
+    bpy.data.objects.remove(obj)
+    bpy.data.meshes.remove(mesh_data)
     try:
         bpy.data.meshes.remove(original_mesh)
     except ReferenceError:
@@ -480,14 +475,12 @@ def test_multiple_roundtrip_cycles(roundtrip_setup):
         current_mesh = decoded_mesh
         current_obj = new_obj
 
-        # Cleanup intermediate objects
+        # Don't cleanup current_obj here - it's needed for the next iteration
+        # Only cleanup the cycle_mesh copy
         try:
-            bpy.data.objects.remove(current_obj)
-        except ReferenceError:
-            pass  # Object already removed
-        try:
-            bpy.data.meshes.remove(cycle_mesh)
-        except ReferenceError:
+            if cycle_mesh and cycle_mesh.name in bpy.data.meshes:
+                bpy.data.meshes.remove(cycle_mesh)
+        except (ReferenceError, KeyError):
             pass  # Mesh already removed
 
     # Cleanup final objects
@@ -542,8 +535,9 @@ def test_encoding_decoding_consistency(roundtrip_setup):
         "Multiple encodings should produce consistent face counts"
 
     # Cleanup
+    mesh_data = obj.data  # Store reference before removing object
     bpy.data.objects.remove(obj)
-    bpy.data.meshes.remove(obj.data)
+    bpy.data.meshes.remove(mesh_data)
 
 def test_large_mesh_roundtrip(roundtrip_setup):
     """Test round-trip performance with larger meshes."""

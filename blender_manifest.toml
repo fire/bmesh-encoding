@@ -1,40 +1,46 @@
-# SPDX-License-Identifier: MIT
+# Blender Manifest for EXT_bmesh_encoding Addon
+
 schema_version = "1.0.0"
 
+# Addon Information
 id = "ext_bmesh_encoding"
 version = "1.0.0"
 name = "EXT_bmesh_encoding"
-tagline = "glTF extension for BMesh topology preservation"
-maintainer = "K. S. Ernest Lee <ernest.lee@chibifire.com>"
+tagline = "Preserve mesh topology during glTF export/import"
+maintainer = "EXT_bmesh_encoding Team"
 type = "add-on"
 
-website = "https://github.com/vrm-c/VRM-Addon-for-Blender"
-doc_url = "https://github.com/vrm-c/vrm-specification/tree/master/specification/0.0/schema/extensions/EXT_bmesh_encoding"
+# Blender Compatibility
+blender_version_min = "4.0.0"
 
+# Description
 description = """
-Standalone Blender addon for the EXT_bmesh_encoding glTF extension.
+EXT_bmesh_encoding preserves mesh topology during glTF export/import operations.
 
-This extension preserves BMesh topology information during glTF export,
-allowing for accurate reconstruction of mesh connectivity and edge flow
-in supporting applications.
+This addon implements the EXT_bmesh_encoding glTF extension to maintain
+original mesh face structures (quads, ngons) instead of triangulating
+during the export/import process.
 
 Features:
-- Preserves vertex adjacency information
-- Maintains edge connectivity and manifold status
-- Supports UV coordinate mapping
-- Compatible with glTF 2.0 specification
+- Preserve quad faces during glTF roundtrip
+- Maintain ngon topology
+- Support for complex mesh structures
+- Compatible with VRM 0.x and 1.x formats
 """
 
-blender_version_min = "3.6.0"
+# Tags
+tags = ["Import-Export", "Mesh", "glTF", "VRM"]
 
-permissions = []
+# License
+license = ["MIT"]
 
-tags = ["Import-Export", "Mesh", "glTF"]
+# Website
+website = ""
 
-license = [
-    "SPDX:MIT"
-]
+# Permissions (none required)
+# permissions = []
 
-copyright = [
-    "2025-present K. S. Ernest Lee"
-]
+# Addon files
+wheels = []
+
+# No external Python modules required beyond Blender's standard library

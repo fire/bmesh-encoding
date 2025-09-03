@@ -83,12 +83,25 @@ class MockVrm0Exporter:
 
     def export_vrm(self):
         """Mock VRM export - returns mock glTF binary data with proper EXT_bmesh_encoding integration."""
-        # Create a simple mock glTF structure
+        # Create mock glTF structure with multiple meshes if multiple objects
+        meshes = []
+        nodes = []
+
+        for i, obj in enumerate(self.objects):
+            if obj.type == 'MESH':
+                mesh_data = {
+                    "name": obj.data.name,
+                    "primitives": [{}]
+                }
+                meshes.append(mesh_data)
+                nodes.append({"mesh": i})
+
         gltf_data = {
             "asset": {"version": "2.0"},
-            "scenes": [{"nodes": [0]}],
-            "nodes": [{"mesh": 0}],
-            "meshes": [{"primitives": [{}]}]
+            "extensions": {"VRM": {"specVersion": "0.0"}},
+            "scenes": [{"nodes": list(range(len(nodes)))}],
+            "nodes": nodes,
+            "meshes": meshes
         }
 
         # Add EXT_bmesh_encoding if enabled
@@ -99,20 +112,31 @@ class MockVrm0Exporter:
             if "EXT_bmesh_encoding" not in gltf_data["extensionsUsed"]:
                 gltf_data["extensionsUsed"].append("EXT_bmesh_encoding")
 
-            # Add mock extension data to mesh primitive (avoiding bytearray serialization issues)
-            if "extensions" not in gltf_data["meshes"][0]["primitives"][0]:
-                gltf_data["meshes"][0]["primitives"][0]["extensions"] = {}
+            # Add mock extension data to ALL mesh primitives
+            for mesh in gltf_data["meshes"]:
+                for primitive in mesh.get("primitives", []):
+                    if "extensions" not in primitive:
+                        primitive["extensions"] = {}
 
-            # Create simplified mock extension data that can be JSON serialized
-            gltf_data["meshes"][0]["primitives"][0]["extensions"]["EXT_bmesh_encoding"] = {
-                "vertices": {"count": 8},
-                "edges": {"count": 12},
-                "loops": {"count": 24},
-                "faces": {"count": 6}
-            }
-
-            # Set mesh name for identification
-            gltf_data["meshes"][0]["name"] = self.objects[0].data.name if self.objects else "TestMesh"
+                    # Create simplified mock extension data that can be JSON serialized
+                    primitive["extensions"]["EXT_bmesh_encoding"] = {
+                        "vertices": {"count": 8},
+                        "edges": {
+                            "count": 12,
+                            "attributes": {
+                                "_SMOOTH": {
+                                    "componentType": 5121,
+                                    "count": 12,
+                                    "target": 34962
+                                }
+                            }
+                        },
+                        "loops": {"count": 24},
+                        "faces": {
+                            "count": 6,
+                            "smooth": [True, False, True, False, True, False]  # Mock smooth flags
+                        }
+                    }
 
         # Convert to JSON and add glTF header
         json_str = json.dumps(gltf_data, separators=(',', ':'))
@@ -180,7 +204,7 @@ class MockVrm1Exporter:
         self.extras_object_name_key = "object_name"
 
     def export_vrm(self):
-        """Mock VRM 1.x export."""
+        """Mock VRM 1.x export with proper EXT_bmesh_encoding topology."""
         # Similar to VRM 0.x but with VRM 1.0 structure
         gltf_data = {
             "asset": {"version": "2.0"},
@@ -193,10 +217,14 @@ class MockVrm1Exporter:
         # Add EXT_bmesh_encoding if enabled
         if self.export_ext_bmesh_encoding:
             gltf_data["extensionsUsed"] = ["EXT_bmesh_encoding"]
+
+            # Generate proper faceLoopIndices based on actual mesh topology
+            face_loop_indices, face_counts = self._generate_face_loop_indices()
+
             gltf_data["meshes"][0]["primitives"][0]["extensions"] = {
                 "EXT_bmesh_encoding": {
-                    "faceLoopIndices": [0, 1, 2, 3],
-                    "faceCounts": [4]
+                    "faceLoopIndices": face_loop_indices,
+                    "faceCounts": face_counts
                 }
             }
 
@@ -210,6 +238,31 @@ class MockVrm1Exporter:
         binary_chunk = (0).to_bytes(4, 'little') + b'BIN\x00'
 
         return header + json_chunk + binary_chunk
+
+    def _generate_face_loop_indices(self):
+        """Generate proper faceLoopIndices based on actual mesh topology."""
+        face_loop_indices = []
+        face_counts = []
+
+        # Process each mesh object to get actual topology
+        for obj in self.objects:
+            if obj.type == 'MESH':
+                mesh = obj.data
+
+                # Process each face in the mesh
+                for poly in mesh.polygons:
+                    face_counts.append(poly.loop_total)
+
+                    # Add loop indices for this face
+                    for loop_idx in range(poly.loop_start, poly.loop_start + poly.loop_total):
+                        face_loop_indices.append(loop_idx)
+
+        # If no mesh objects found, provide default values
+        if not face_loop_indices:
+            face_loop_indices = [0, 1, 2, 3]  # Default quad
+            face_counts = [4]
+
+        return face_loop_indices, face_counts
 
     def capture_original_mesh_topology(self):
         """Mock topology capture for VRM 1.x."""

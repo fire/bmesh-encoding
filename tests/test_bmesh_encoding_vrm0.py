@@ -292,8 +292,9 @@ def test_bmesh_encoding_fidelity_sphere(vrm0_test_setup):
         "Face count should match for sphere"
 
     # Cleanup
+    mesh_data = obj.data  # Store reference before removing object
     bpy.data.objects.remove(obj)
-    bpy.data.meshes.remove(obj.data)
+    bpy.data.meshes.remove(mesh_data)
     bpy.data.meshes.remove(decoded_mesh)
 
 def test_bmesh_encoding_fidelity_complex_mesh(vrm0_test_setup):
@@ -320,8 +321,9 @@ def test_bmesh_encoding_fidelity_complex_mesh(vrm0_test_setup):
         "Face count should match for complex mesh"
 
     # Cleanup
+    mesh_data = obj.data  # Store reference before removing object
     bpy.data.objects.remove(obj)
-    bpy.data.meshes.remove(obj.data)
+    bpy.data.meshes.remove(mesh_data)
     bpy.data.meshes.remove(decoded_mesh)
 
 def test_ext_bmesh_encoding_buffer_view_creation(vrm0_test_setup):
@@ -372,8 +374,9 @@ def test_ext_bmesh_encoding_buffer_view_creation(vrm0_test_setup):
                         f"Buffer view index {buffer_view_index} should exist"
 
     # Cleanup
+    mesh_data = obj.data  # Store reference before removing object
     bpy.data.objects.remove(obj)
-    bpy.data.meshes.remove(obj.data)
+    bpy.data.meshes.remove(mesh_data)
 
 def test_ext_bmesh_encoding_multiple_meshes(vrm0_test_setup):
     """Test EXT_bmesh_encoding with multiple meshes in the same export."""
@@ -414,12 +417,15 @@ def test_ext_bmesh_encoding_multiple_meshes(vrm0_test_setup):
     assert ext_bmesh_count == 3, "All meshes should have EXT_bmesh_encoding when enabled"
 
     # Cleanup
+    mesh_data1 = obj1.data  # Store references before removing objects
+    mesh_data2 = obj2.data
+    mesh_data3 = obj3.data
     bpy.data.objects.remove(obj1)
     bpy.data.objects.remove(obj2)
     bpy.data.objects.remove(obj3)
-    bpy.data.meshes.remove(obj1.data)
-    bpy.data.meshes.remove(obj2.data)
-    bpy.data.meshes.remove(obj3.data)
+    bpy.data.meshes.remove(mesh_data1)
+    bpy.data.meshes.remove(mesh_data2)
+    bpy.data.meshes.remove(mesh_data3)
 
 def test_ext_bmesh_encoding_backwards_compatibility(vrm0_test_setup):
     """Test that exporting without EXT_bmesh_encoding produces compatible output."""
@@ -453,8 +459,9 @@ def test_ext_bmesh_encoding_backwards_compatibility(vrm0_test_setup):
     assert len(meshes) > 0, "Should have at least one mesh"
 
     # Cleanup
+    mesh_data = obj.data  # Store reference before removing object
     bpy.data.objects.remove(obj)
-    bpy.data.meshes.remove(obj.data)
+    bpy.data.meshes.remove(mesh_data)
 
 def test_ext_bmesh_encoding_edge_case_empty_mesh(vrm0_test_setup):
     """Test EXT_bmesh_encoding handling of edge cases like empty meshes."""
@@ -476,8 +483,9 @@ def test_ext_bmesh_encoding_edge_case_empty_mesh(vrm0_test_setup):
     assert result is not None, "Export should succeed even with empty mesh"
 
     # Cleanup
+    mesh_data = obj.data  # Store reference before removing object
     bpy.data.objects.remove(obj)
-    bpy.data.meshes.remove(obj.data)
+    bpy.data.meshes.remove(mesh_data)
 
 def test_ext_bmesh_encoding_edge_case_multiple_materials(vrm0_test_setup):
     """Test EXT_bmesh_encoding with meshes having multiple materials."""
@@ -510,8 +518,9 @@ def test_ext_bmesh_encoding_edge_case_multiple_materials(vrm0_test_setup):
     assert "EXT_bmesh_encoding" in gltf_data.get("extensionsUsed", [])
 
     # Cleanup
+    mesh_data = obj.data  # Store reference before removing object
     bpy.data.objects.remove(obj)
-    bpy.data.meshes.remove(obj.data)
+    bpy.data.meshes.remove(mesh_data)
     bpy.data.materials.remove(mat2)
 
 def test_ext_bmesh_encoding_mesh_with_shape_keys(vrm0_test_setup):
@@ -545,8 +554,9 @@ def test_ext_bmesh_encoding_mesh_with_shape_keys(vrm0_test_setup):
     assert "EXT_bmesh_encoding" in gltf_data.get("extensionsUsed", [])
 
     # Cleanup
+    mesh_data = obj.data  # Store reference before removing object
     bpy.data.objects.remove(obj)
-    bpy.data.meshes.remove(obj.data)
+    bpy.data.meshes.remove(mesh_data)
 
 def test_ext_bmesh_encoding_smooth_shading_preservation(vrm0_test_setup):
     """Test that EXT_bmesh_encoding preserves smooth/faceted shading in VRM 0.x export."""
@@ -615,8 +625,9 @@ def test_ext_bmesh_encoding_smooth_shading_preservation(vrm0_test_setup):
     assert "_SMOOTH" in edge_data["attributes"], "Edge attributes should contain _SMOOTH flags"
 
     # Cleanup
+    mesh_data = obj.data  # Store reference before removing object
     bpy.data.objects.remove(obj)
-    bpy.data.meshes.remove(obj.data)
+    bpy.data.meshes.remove(mesh_data)
 
 def test_ext_bmesh_encoding_pure_smooth_mesh(vrm0_test_setup):
     """Test EXT_bmesh_encoding with a mesh that has all faces set to smooth."""
@@ -663,8 +674,9 @@ def test_ext_bmesh_encoding_pure_smooth_mesh(vrm0_test_setup):
                     break
 
     # Cleanup
+    mesh_data = obj.data  # Store reference before removing object
     bpy.data.objects.remove(obj)
-    bpy.data.meshes.remove(obj.data)
+    bpy.data.meshes.remove(mesh_data)
 
 
 def test_ext_bmesh_encoding_pure_faceted_mesh(vrm0_test_setup):
@@ -711,5 +723,6 @@ def test_ext_bmesh_encoding_pure_faceted_mesh(vrm0_test_setup):
                     break
 
     # Cleanup
+    mesh_data = obj.data  # Store reference before removing object
     bpy.data.objects.remove(obj)
-    bpy.data.meshes.remove(obj.data)
+    bpy.data.meshes.remove(mesh_data)
