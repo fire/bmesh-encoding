@@ -4,6 +4,18 @@
 import bpy
 from bpy.types import Panel, Menu
 
+# Try to import logger, fallback to print if not available
+try:
+    from logger import get_logger
+    logger = get_logger(__name__)
+except ImportError:
+    class MockLogger:
+        def debug(self, msg): print(f"[DEBUG] {msg}")
+        def info(self, msg): print(f"[INFO] {msg}")
+        def warning(self, msg): print(f"[WARNING] {msg}")
+        def error(self, msg): print(f"[ERROR] {msg}")
+    logger = MockLogger()
+
 
 class EXTBMeshEncoding_PT_MainPanel(Panel):
     """Main panel for EXT_bmesh_encoding in the 3D View."""

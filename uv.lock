@@ -97,6 +97,7 @@ dependencies = [
 [package.dev-dependencies]
 dev = [
     { name = "codespell" },
+    { name = "ext-bmesh-encoding" },
     { name = "mypy" },
     { name = "pytest" },
     { name = "ruff" },
@@ -108,6 +109,7 @@ requires-dist = [{ name = "bpy", specifier = "==4.5.1" }]
 [package.metadata.requires-dev]
 dev = [
     { name = "codespell", specifier = "==2.4.1" },
+    { name = "ext-bmesh-encoding", editable = "." },
     { name = "mypy", specifier = "==1.15.0" },
     { name = "pytest" },
     { name = "ruff", specifier = "==0.9.6" },

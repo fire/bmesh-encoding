@@ -14,10 +14,19 @@ dependencies = [
 [tool.uv]
 dev-dependencies = [
     "codespell ==2.4.1",
+    "ext-bmesh-encoding",
     "mypy ==1.15.0",
     "pytest",
     "ruff ==0.9.6",
 ]
+
+[tool.uv.workspace]
+members = [
+    ".",
+]
+
+[tool.uv.sources]
+ext-bmesh-encoding = { workspace = true }
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

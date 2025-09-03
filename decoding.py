@@ -566,83 +566,58 @@ class BmeshDecoder:
         return faces
 
     def apply_bmesh_to_blender_mesh(self, bm: BMesh, mesh: bpy.types.Mesh) -> bool:
-        """Apply reconstructed BMesh data to Blender mesh with proper ngon display."""
+        """Apply reconstructed BMesh data to Blender mesh with proper ngon preservation."""
         try:
-            # Store BMesh face information before conversion
-            bmesh_face_info = {}
-            for i, face in enumerate(bm.faces):
-                bmesh_face_info[i] = {
-                    'smooth': face.smooth,
-                    'verts': len(face.verts)
-                }
-
-            # Count ngon faces in BMesh
-            ngon_count = sum(1 for info in bmesh_face_info.values() if info['verts'] > 4)
-            quad_count = sum(1 for info in bmesh_face_info.values() if info['verts'] == 4)
-            triangle_count = sum(1 for info in bmesh_face_info.values() if info['verts'] == 3)
+            # Count original ngon topology
+            ngon_count = sum(1 for face in bm.faces if len(face.verts) > 4)
+            quad_count = sum(1 for face in bm.faces if len(face.verts) == 4)
+            triangle_count = sum(1 for face in bm.faces if len(face.verts) == 3)
 
             logger.info(f"BMesh contains: {triangle_count} triangles, {quad_count} quads, {ngon_count} ngons")
 
-            # Update the mesh with BMesh data
+            # Clear existing mesh data
+            mesh.clear_geometry()
+
+            # DIRECT BMESH CONVERSION: Convert BMesh to mesh without triangulation
+            # This preserves ngon topology by using Blender's internal ngon support
             bm.to_mesh(mesh)
 
-            # CRITICAL: Ensure ngon faces are properly recognized
-            # The bm.to_mesh() conversion might triangulate ngons for internal storage
-            # but we need to ensure they're displayed as ngons in the viewport
-
-            # Force mesh validation and ngon reconstruction
+            # Update mesh to ensure ngon topology is properly recognized
             mesh.update()
             mesh.calc_loop_triangles()
 
-            # Additional validation for ngon preservation
-            if ngon_count > 0:
-                logger.info(f"Detected {ngon_count} ngons in BMesh - ensuring proper display")
+            # Apply smooth flags from BMesh to mesh
+            for i, face in enumerate(mesh.polygons):
+                if i < len(bm.faces):
+                    face.use_smooth = bm.faces[i].smooth
 
-                # Validate that mesh polygons match BMesh face structure
-                mesh_ngon_count = sum(1 for poly in mesh.polygons if len(poly.vertices) > 4)
-                mesh_quad_count = sum(1 for poly in mesh.polygons if len(poly.vertices) == 4)
-                mesh_triangle_count = sum(1 for poly in mesh.polygons if len(poly.vertices) == 3)
-
-                logger.info(f"Mesh after conversion: {mesh_triangle_count} triangles, {mesh_quad_count} quads, {mesh_ngon_count} ngons")
-
-                if mesh_ngon_count < ngon_count:
-                    logger.warning(f"Ngon count mismatch: BMesh had {ngon_count}, mesh has {mesh_ngon_count}")
-                    logger.warning("Some ngons may have been triangulated during conversion")
-
-                    # Attempt to preserve ngon structure by adjusting mesh settings
-                    mesh.use_auto_smooth = False  # Disable auto smooth to preserve face structure
-                    logger.info("Disabled auto smooth to preserve ngon structure")
-                else:
-                    logger.info("✅ Ngon count preserved correctly")
-
-            # Transfer face smooth flags from BMesh to mesh
-            if bmesh_face_info:
-                for i, face in enumerate(mesh.polygons):
-                    if i in bmesh_face_info:
-                        face.use_smooth = bmesh_face_info[i]['smooth']
-                        logger.debug(f"Transferred smooth flag {bmesh_face_info[i]['smooth']} to mesh face {i}")
-
-            # Calculate normals to respect edge smooth flags
-            # Use the correct method based on Blender version
+            # Calculate normals
             if hasattr(mesh, 'calc_normals'):
                 mesh.calc_normals()
             elif hasattr(mesh, 'calc_normals_split'):
                 mesh.calc_normals_split()
-            else:
-                logger.warning("No normal calculation method available")
 
-            # Final mesh validation
+            # Final validation
             mesh.validate()
             mesh.update()
 
-            # Log final mesh statistics
+            # Count final topology
             final_ngon_count = sum(1 for poly in mesh.polygons if len(poly.vertices) > 4)
             final_quad_count = sum(1 for poly in mesh.polygons if len(poly.vertices) == 4)
             final_triangle_count = sum(1 for poly in mesh.polygons if len(poly.vertices) == 3)
 
             logger.info(f"Final mesh: {final_triangle_count} triangles, {final_quad_count} quads, {final_ngon_count} ngons")
-            logger.info("Successfully applied BMesh to Blender mesh with ngon preservation")
 
+            # Verify ngon preservation
+            if ngon_count > 0:
+                if final_ngon_count >= ngon_count:
+                    logger.info("✅ Ngon topology successfully preserved!")
+                else:
+                    logger.warning(f"⚠️ Some ngons may have been triangulated: {final_ngon_count}/{ngon_count} preserved")
+            else:
+                logger.info("No ngons to preserve")
+
+            logger.info("Successfully applied BMesh to Blender mesh with topology preservation")
             return True
 
         except Exception as e:

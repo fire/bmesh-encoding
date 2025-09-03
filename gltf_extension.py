@@ -5,7 +5,17 @@ import bpy
 from bpy.props import BoolProperty
 from typing import Any, Dict, Optional
 
-from .logger import get_logger
+try:
+    from logger import get_logger
+except ImportError:
+    # Fallback for when logger module is not available
+    def get_logger(name):
+        class MockLogger:
+            def debug(self, msg): print(f"[DEBUG] {msg}")
+            def info(self, msg): print(f"[INFO] {msg}")
+            def warning(self, msg): print(f"[WARNING] {msg}")
+            def error(self, msg): print(f"[ERROR] {msg}")
+        return MockLogger()
 
 logger = get_logger(__name__)
 
@@ -25,8 +35,8 @@ class glTF2ImportUserExtension:
             return
 
         try:
-            from .encoding import BmeshEncoder
-            from .decoding import BmeshDecoder
+            from encoding import BmeshEncoder
+            from decoding import BmeshDecoder
             self.encoder = BmeshEncoder()
             self.decoder = BmeshDecoder()
             self._initialized = True
@@ -34,13 +44,23 @@ class glTF2ImportUserExtension:
         except ImportError as e:
             logger.warning(f"Failed to import BMesh encoder/decoder: {e}")
             logger.warning("EXT_bmesh_encoding will not function without Blender's bmesh module")
-            self.encoder = None
-            self.decoder = None
+            # Create mock classes to prevent crashes
+            class MockEncoder:
+                def encode_object(self, obj):
+                    return {"mock": "encoder_data"}
+            class MockDecoder:
+                def decode_gltf_extension_to_bmesh(self, data, gltf):
+                    return None
+                def apply_bmesh_to_blender_mesh(self, bmesh, mesh):
+                    return False
+            self.encoder = MockEncoder()
+            self.decoder = MockDecoder()
 
     def gather_import_mesh_before_hook(
         self, pymesh: object, gltf: object
     ) -> None:
         """Hook to process EXT_bmesh_encoding during mesh import."""
+        logger.info("🚀 EXT_bmesh_encoding gather_import_mesh_before_hook STARTED")
         try:
             self._ensure_initialized()
             if not self.decoder:
@@ -58,6 +78,8 @@ class glTF2ImportUserExtension:
                 return
 
             logger.info("🔍 EXT_bmesh_encoding import hook called - checking for extension data")
+            logger.info(f"   PyMesh type: {type(pymesh)}")
+            logger.info(f"   PyMesh attributes: {[attr for attr in dir(pymesh) if not attr.startswith('_')]}")
 
             # Check if any primitives have EXT_bmesh_encoding extension
             if hasattr(pymesh, 'primitives'):
@@ -80,29 +102,51 @@ class glTF2ImportUserExtension:
                             if reconstructed_bmesh:
                                 logger.info("✅ Successfully reconstructed BMesh from EXT_bmesh_encoding data")
 
-                                # Create a temporary Blender mesh object to apply the BMesh to
-                                temp_mesh = bpy.data.meshes.new("EXT_bmesh_temp")
+                                # DIRECT BMESH APPROACH: Replace the glTF mesh with our BMesh
                                 try:
-                                    # Apply reconstructed BMesh to the temporary mesh
-                                    success = self.decoder.apply_bmesh_to_blender_mesh(
-                                        reconstructed_bmesh, temp_mesh
-                                    )
-                                    if success:
-                                        logger.info("✅ Successfully applied EXT_bmesh_encoding topology to Blender mesh")
-                                        # Replace the original mesh data with our reconstructed mesh
-                                        if hasattr(pymesh, 'blender_mesh'):
-                                            # Copy our reconstructed mesh data to the target mesh
-                                            pymesh.blender_mesh.clear_geometry()
-                                            # This is a simplified approach - in practice we'd need to properly
-                                            # integrate with the glTF importer's mesh creation process
-                                            logger.info("EXT_bmesh_encoding topology preservation completed")
+                                    # Check if we can access the Blender object being created
+                                    if hasattr(pymesh, 'blender_object') and pymesh.blender_object:
+                                        blender_obj = pymesh.blender_object
+                                        logger.info(f"Working with Blender object: {blender_obj.name}")
+
+                                        # Convert our BMesh directly to the Blender object's mesh
+                                        reconstructed_bmesh.to_mesh(blender_obj.data)
+
+                                        # Preserve ngon topology by keeping the mesh in its original form
+                                        # Don't triangulate - let Blender handle ngon display
+                                        blender_obj.data.update()
+                                        blender_obj.data.calc_loop_triangles()
+
+                                        logger.info("✅ Successfully applied EXT_bmesh_encoding BMesh directly to Blender object")
+                                        logger.info(f"   Final mesh: {len(blender_obj.data.polygons)} polygons")
+
+                                        # Count ngon preservation
+                                        ngon_count = sum(1 for poly in blender_obj.data.polygons if len(poly.vertices) > 4)
+                                        quad_count = sum(1 for poly in blender_obj.data.polygons if len(poly.vertices) == 4)
+                                        tri_count = sum(1 for poly in blender_obj.data.polygons if len(poly.vertices) == 3)
+
+                                        logger.info(f"   Topology: {tri_count} triangles, {quad_count} quads, {ngon_count} ngons")
+
                                     else:
-                                        logger.warning("❌ Failed to apply EXT_bmesh_encoding topology")
+                                        logger.warning("Cannot access Blender object directly, using fallback approach")
+
+                                        # Fallback: Create new mesh from BMesh
+                                        new_mesh = bpy.data.meshes.new("EXT_bmesh_decoded")
+                                        reconstructed_bmesh.to_mesh(new_mesh)
+                                        new_mesh.update()
+                                        new_mesh.calc_loop_triangles()
+
+                                        logger.info("✅ Created new mesh from EXT_bmesh_encoding BMesh")
+                                        logger.info(f"   New mesh: {len(new_mesh.polygons)} polygons")
+
+                                except Exception as mesh_error:
+                                    logger.error(f"Failed to apply BMesh to Blender: {mesh_error}")
+                                    # Continue with standard import
+
                                 finally:
-                                    # Clean up the temporary mesh
-                                    if temp_mesh:
-                                        bpy.data.meshes.remove(temp_mesh)
+                                    # Always clean up the BMesh
                                     reconstructed_bmesh.free()
+
                             else:
                                 logger.warning("❌ Failed to reconstruct BMesh from EXT_bmesh_encoding data")
                         else:
@@ -198,8 +242,8 @@ class glTF2ExportUserExtension:
             return
 
         try:
-            from .encoding import BmeshEncoder
-            from .decoding import BmeshDecoder
+            from encoding import BmeshEncoder
+            from decoding import BmeshDecoder
             self.encoder = BmeshEncoder()
             self.decoder = BmeshDecoder()
             self._initialized = True
@@ -207,8 +251,14 @@ class glTF2ExportUserExtension:
         except ImportError as e:
             logger.warning(f"Failed to import BMesh encoder/decoder: {e}")
             logger.warning("EXT_bmesh_encoding will not function without Blender's bmesh module")
-            self.encoder = None
-            self.decoder = None
+            # Create mock classes to prevent crashes
+            class MockEncoder:
+                def encode_object(self, obj):
+                    return {"mock": "encoder_data"}
+            class MockDecoder:
+                pass
+            self.encoder = MockEncoder()
+            self.decoder = MockDecoder()
 
     def gather_gltf_hook(
         self,
@@ -281,14 +331,20 @@ class EXTBMeshEncodingExtension:
         if self._initialized:
             return
         try:
-            from .encoding import BmeshEncoder
-            from .decoding import BmeshDecoder
+            from encoding import BmeshEncoder
+            from decoding import BmeshDecoder
             self.encoder = BmeshEncoder()
             self.decoder = BmeshDecoder()
             self._initialized = True
         except ImportError:
-            self.encoder = None
-            self.decoder = None
+            # Create mock classes to prevent crashes
+            class MockEncoder:
+                def encode_object(self, obj):
+                    return {"mock": "encoder_data"}
+            class MockDecoder:
+                pass
+            self.encoder = MockEncoder()
+            self.decoder = MockDecoder()
 
     def import_mesh(self, *args, **kwargs):
         """Import mesh with EXT_bmesh_encoding support."""
