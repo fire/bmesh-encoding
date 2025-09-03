@@ -218,36 +218,81 @@ class EXT_bmesh_encoding:
         This is called during glTF import for each mesh primitive.
         We check for EXT_bmesh_encoding extension and reconstruct the topology.
         """
+        logger.debug(f"EXT_bmesh_encoding import_mesh called for mesh '{blender_mesh.name}'")
+        logger.debug(f"gltf2_object type: {type(gltf2_object)}")
+        logger.debug(f"blender_mesh type: {type(blender_mesh)}")
+        logger.debug(f"import_settings keys: {list(import_settings.keys()) if import_settings else 'None'}")
+
         # Check if the primitive has our extension
         if not hasattr(gltf2_object, 'extensions') or not gltf2_object.extensions:
+            logger.debug(f"No extensions found on gltf2_object for mesh '{blender_mesh.name}'")
+            logger.debug(f"gltf2_object attributes: {dir(gltf2_object) if hasattr(gltf2_object, '__dict__') else 'No __dict__'}")
             return None
+
+        logger.debug(f"Extensions found: {list(gltf2_object.extensions.keys())}")
 
         extension_data = gltf2_object.extensions.get(self.extension_name)
         if not extension_data:
+            logger.debug(f"EXT_bmesh_encoding extension not found in extensions for mesh '{blender_mesh.name}'")
             return None
 
-        logger.info(f"Importing EXT_bmesh_encoding for mesh '{blender_mesh.name}'")
+        logger.info(f"Found EXT_bmesh_encoding extension for mesh '{blender_mesh.name}'")
+        logger.debug(f"Extension data keys: {list(extension_data.keys()) if isinstance(extension_data, dict) else type(extension_data)}")
+
+        # Log mesh topology before reconstruction
+        logger.debug(f"Original mesh topology - vertices: {len(blender_mesh.vertices)}, polygons: {len(blender_mesh.polygons)}")
+        if blender_mesh.polygons:
+            face_sizes = [len(poly.vertices) for poly in blender_mesh.polygons]
+            logger.debug(f"Original face sizes: {face_sizes}")
+            logger.debug(f"Face size distribution: triangles={face_sizes.count(3)}, quads={face_sizes.count(4)}, ngons={sum(1 for size in face_sizes if size > 4)}")
 
         try:
             # Decode the extension data to reconstruct BMesh topology
+            logger.debug("Starting BMesh reconstruction from extension data...")
             reconstructed_bmesh = self.decoder.decode_extension_to_bmesh(extension_data, gltf2_object)
 
             if not reconstructed_bmesh:
                 logger.warning(f"Failed to reconstruct BMesh from EXT_bmesh_encoding for mesh '{blender_mesh.name}'")
+                logger.debug("decode_extension_to_bmesh returned None")
                 return None
 
-            # Apply the reconstructed topology to the imported mesh
-            # This would typically involve updating the mesh's topology to match the BMesh
-            # For now, we'll just log the successful reconstruction
-            logger.info(f"Successfully reconstructed BMesh topology for mesh '{blender_mesh.name}'")
+            logger.info(f"Successfully reconstructed BMesh: {len(reconstructed_bmesh.verts)} verts, {len(reconstructed_bmesh.edges)} edges, {len(reconstructed_bmesh.faces)} faces")
 
-            # Clean up
+            # Log reconstructed topology
+            if reconstructed_bmesh.faces:
+                reconstructed_face_sizes = [len(face.verts) for face in reconstructed_bmesh.faces]
+                logger.debug(f"Reconstructed face sizes: {reconstructed_face_sizes}")
+                logger.debug(f"Reconstructed face distribution: triangles={reconstructed_face_sizes.count(3)}, quads={reconstructed_face_sizes.count(4)}, ngons={sum(1 for size in reconstructed_face_sizes if size > 4)}")
+
+            # Apply the reconstructed BMesh to preserve original topology
+            logger.debug("Applying reconstructed BMesh to Blender mesh...")
+            success = self.decoder.apply_bmesh_to_blender_mesh(reconstructed_bmesh, blender_mesh)
+
+            # Clean up the BMesh
             reconstructed_bmesh.free()
+            logger.debug("BMesh cleaned up")
 
-            return blender_mesh
+            if success:
+                logger.info(f"Successfully applied EXT_bmesh_encoding topology to mesh '{blender_mesh.name}'")
+
+                # Log final mesh topology
+                logger.debug(f"Final mesh topology - vertices: {len(blender_mesh.vertices)}, polygons: {len(blender_mesh.polygons)}")
+                if blender_mesh.polygons:
+                    final_face_sizes = [len(poly.vertices) for poly in blender_mesh.polygons]
+                    logger.debug(f"Final face sizes: {final_face_sizes}")
+                    logger.debug(f"Final face distribution: triangles={final_face_sizes.count(3)}, quads={final_face_sizes.count(4)}, ngons={sum(1 for size in final_face_sizes if size > 4)}")
+
+                return blender_mesh
+            else:
+                logger.error(f"Failed to apply reconstructed topology to mesh '{blender_mesh.name}'")
+                logger.debug("apply_bmesh_to_blender_mesh returned False")
+                return None
 
         except Exception as e:
             logger.error(f"Failed to import EXT_bmesh_encoding for mesh '{blender_mesh.name}': {e}")
+            logger.debug(f"Exception details: {type(e).__name__}: {str(e)}")
+            import traceback
+            logger.debug(f"Traceback: {traceback.format_exc()}")
             return None
 
     def gather_gltf_extensions(self, export_settings: Dict[str, Any]) -> Tuple[Dict[str, Any], Dict[str, Any]]:

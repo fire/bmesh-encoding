@@ -11,6 +11,7 @@ from bpy.props import BoolProperty, StringProperty
 from bpy.types import AddonPreferences, Operator, Panel
 
 from . import exporter
+from . import importer
 from . import ui
 from . import gltf_extension
 from .logger import get_logger
@@ -26,10 +27,10 @@ bl_info = {
     "location": "File > Export > glTF 2.0 with EXT_bmesh_encoding",
     "description": "Export glTF files with EXT_bmesh_encoding extension for BMesh topology preservation",
     "warning": "",
-    "doc_url": "https://github.com/vrm-c/vrm-specification/tree/master/specification/0.0/schema/extensions/EXT_bmesh_encoding",
+    "doc_url": "https://github.com/fire/bmesh-encoding/tree/main/thirdparty/EXT_bmesh_encoding",
     "support": "COMMUNITY",
     "category": "Import-Export",
-    "tracker_url": "https://github.com/vrm-c/VRM-Addon-for-Blender/issues",
+    "tracker_url": "https://github.com/fire/bmesh-encoding.git/issues",
 }
 
 
@@ -77,6 +78,10 @@ def register():
         exporter.register()
         logger.debug("Exporter registered")
 
+        # Register importer
+        importer.register()
+        logger.debug("Importer registered")
+
         # Register UI
         ui.register()
         logger.debug("UI registered")
@@ -104,6 +109,9 @@ def unregister():
 
         ui.unregister()
         logger.debug("UI unregistered")
+
+        importer.unregister()
+        logger.debug("Importer unregistered")
 
         exporter.unregister()
         logger.debug("Exporter unregistered")
