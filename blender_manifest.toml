@@ -5,7 +5,7 @@ id = "ext_bmesh_encoding"
 version = "1.0.0"
 name = "EXT_bmesh_encoding"
 tagline = "glTF extension for BMesh topology preservation"
-maintainer = "VRM Consortium"
+maintainer = "K. S. Ernest Lee <ernest.lee@chibifire.com>"
 type = "add-on"
 
 website = "https://github.com/vrm-c/VRM-Addon-for-Blender"
