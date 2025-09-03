@@ -135,7 +135,7 @@ class glTF2ImportUserExtension:
         from .importer import EXTBMeshEncodingImporter
         self.importer = EXTBMeshEncodingImporter()
 
-    def gather_import_decode_primitive(self, gltf, pymesh, prim, skin_idx):
+    def gather_import_decode_primitive(self, pymesh, prim, skin_idx, gltf):
         """Hook called during primitive decoding to process EXT_bmesh_encoding BEFORE triangulation."""
         try:
             logger.info("EXT_bmesh_encoding gather_import_decode_primitive called - processing before triangulation")
@@ -159,7 +159,7 @@ class glTF2ImportUserExtension:
         except Exception as e:
             logger.error(f"Error in gather_import_decode_primitive: {e}")
 
-    def gather_import_mesh_after_hook(self, gltf, pymesh, mesh):
+    def gather_import_mesh_after_hook(self, pymesh, mesh, gltf):
         """Hook called after mesh import to reconstruct original topology from EXT_bmesh_encoding."""
         try:
             logger.info("EXT_bmesh_encoding gather_import_mesh_after_hook called - reconstructing topology")
@@ -208,6 +208,14 @@ class glTF2ImportUserExtension:
             self.importer.process_armature_bone_after_hook(gltf_node, blender_object, blender_bone, gltf)
         except Exception as e:
             logger.error(f"Error in gather_import_armature_bone_after_hook: {e}")
+
+    def gather_import_mesh_options(self, mesh_options, pymesh, skin_idx, gltf):
+        """Hook called to modify mesh import options."""
+        try:
+            logger.debug("EXT_bmesh_encoding gather_import_mesh_options called")
+            # We don't need to modify mesh options for EXT_bmesh_encoding
+        except Exception as e:
+            logger.error(f"Error in gather_import_mesh_options: {e}")
 
 
 class glTF2ExportUserExtension:
