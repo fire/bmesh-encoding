@@ -1,0 +1,12 @@
+; DO NOT EDIT (unless you know what you are doing)
+;
+; This subdirectory is a git "subrepo", and this file is maintained by the
+; git-subrepo command. See https://github.com/ingydotnet/git-subrepo#readme
+;
+[subrepo]
+	remote = https://github.com/CesiumGS/glTF.git
+	branch = 3d-tiles-next
+	commit = c96d9a43bb141f7206a10cfd1d2488e0487ffa9c
+	parent = 87d5afffc5c030329ff85e0299c560d6fb3ea7ee
+	method = merge
+	cmdver = 0.4.9
