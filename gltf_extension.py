@@ -60,6 +60,9 @@ class EXT_bmesh_encoding:
                 EXT_bmesh_encoding._setup_deferred_registration()
                 logger.info("EXT_bmesh_encoding registration deferred until glTF system is available")
 
+            # Log registration status for debugging
+            EXT_bmesh_encoding._log_registration_status()
+
         except Exception as e:
             logger.error(f"Failed to register EXT_bmesh_encoding: {e}")
             # Don't raise - allow addon to load even if extension registration fails
@@ -140,6 +143,50 @@ class EXT_bmesh_encoding:
         for handler in handlers_to_remove:
             bpy.app.handlers.depsgraph_update_post.remove(handler)
             logger.debug("Removed deferred glTF registration handler")
+
+    @staticmethod
+    def _log_registration_status():
+        """Log the current registration status of the extension hooks."""
+        try:
+            # Check if glTF modules are available
+            try:
+                from io_scene_gltf2 import export_gltf2, import_gltf2
+                gltf_available = True
+            except ImportError:
+                gltf_available = False
+                logger.warning("glTF modules not available for extension registration check")
+                return
+
+            # Check export extension registration
+            export_registered = False
+            if hasattr(export_gltf2, 'registered_extensions'):
+                export_registered = ext_bmesh_encoding in export_gltf2.registered_extensions
+            elif hasattr(export_gltf2, 'extensions'):
+                export_registered = ext_bmesh_encoding in export_gltf2.extensions
+
+            # Check import extension registration
+            import_registered = False
+            if hasattr(import_gltf2, 'registered_extensions'):
+                import_registered = ext_bmesh_encoding in import_gltf2.registered_extensions
+            elif hasattr(import_gltf2, 'extensions'):
+                import_registered = ext_bmesh_encoding in import_gltf2.extensions
+
+            logger.info("EXT_bmesh_encoding registration status:")
+            logger.info(f"  glTF modules available: {gltf_available}")
+            logger.info(f"  Export extension registered: {export_registered}")
+            logger.info(f"  Import extension registered: {import_registered}")
+
+            if export_registered and import_registered:
+                logger.info("✅ EXT_bmesh_encoding extension hooks are properly registered")
+            else:
+                logger.warning("❌ EXT_bmesh_encoding extension hooks registration incomplete")
+                if not export_registered:
+                    logger.warning("  - Export extension NOT registered")
+                if not import_registered:
+                    logger.warning("  - Import extension NOT registered")
+
+        except Exception as e:
+            logger.error(f"Failed to check extension registration status: {e}")
 
     def export_node(self, gltf2_object: Any, blender_object: bpy.types.Object, export_settings: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """

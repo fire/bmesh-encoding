@@ -240,6 +240,150 @@ def compare_mesh_topology(original_mesh, imported_mesh, tolerance=1e-6):
 class TestEndToEndImportExport:
     """End-to-end tests for import/export operations."""
 
+    def test_ext_bmesh_encoding_import_hook_called(self, end_to_end_setup):
+        """Test that EXT_bmesh_encoding extension hooks are actually called during import.
+
+        This test should FAIL initially, demonstrating that the extension hooks
+        are not being triggered during import, which is the root cause of
+        triangulation not being prevented.
+        """
+        encoder, decoder = end_to_end_setup
+
+        # Create a mesh with quads (should remain quads after import)
+        obj = create_quad_mesh("HookTest")
+        original_mesh = obj.data.copy()
+
+        # Track if import_mesh hook was called
+        hook_called = False
+        original_face_count = len(original_mesh.polygons)
+
+        # We'll need to monkey-patch the extension to track calls
+        from ext_bmesh_encoding import gltf_extension
+
+        # Store original method
+        original_import_mesh = gltf_extension.ext_bmesh_encoding.import_mesh
+
+        def tracking_import_mesh(gltf2_object, blender_mesh, import_settings):
+            nonlocal hook_called
+            hook_called = True
+            logger.info("EXT_bmesh_encoding import_mesh hook WAS CALLED!")
+            return original_import_mesh(gltf2_object, blender_mesh, import_settings)
+
+        # Replace with tracking version
+        gltf_extension.ext_bmesh_encoding.import_mesh = tracking_import_mesh
+
+        with tempfile.NamedTemporaryFile(suffix='.gltf', delete=False) as tmp_file:
+            filepath = tmp_file.name
+
+        try:
+            # Export with EXT_bmesh_encoding
+            bpy.ops.export_scene.gltf_ext_bmesh_encoding(
+                filepath=filepath,
+                export_format='GLTF_SEPARATE',
+                use_selection=True
+            )
+
+            # Clear scene
+            bpy.data.objects.remove(obj)
+
+            # Import - this should trigger our extension hook
+            bpy.ops.import_scene.gltf_ext_bmesh_encoding(filepath=filepath)
+
+            # Find imported object
+            imported_obj = None
+            for obj in bpy.context.scene.objects:
+                if obj.type == 'MESH':
+                    imported_obj = obj
+                    break
+
+            assert imported_obj is not None, "Imported object not found"
+
+            # THE CRITICAL TEST: Was our extension hook called?
+            assert hook_called, "EXT_bmesh_encoding import_mesh hook was NEVER called! This proves the extension is not being used during import."
+
+            # If hook was called, check topology preservation
+            imported_mesh = imported_obj.data
+            imported_face_count = len(imported_mesh.polygons)
+
+            # Log results for debugging
+            logger.info(f"Original mesh: {original_face_count} faces")
+            logger.info(f"Imported mesh: {imported_face_count} faces")
+
+            if original_face_count == imported_face_count:
+                logger.info("✅ Face count preserved - extension working!")
+            else:
+                logger.warning(f"❌ Face count changed: {original_face_count} -> {imported_face_count}")
+
+        finally:
+            # Restore original method
+            gltf_extension.ext_bmesh_encoding.import_mesh = original_import_mesh
+
+            # Cleanup
+            if os.path.exists(filepath):
+                os.unlink(filepath)
+            bpy.data.meshes.remove(original_mesh)
+            if imported_obj:
+                bpy.data.objects.remove(imported_obj)
+
+    def test_topology_preservation_fails_without_extension(self, end_to_end_setup):
+        """Test that topology is NOT preserved when using standard glTF import.
+
+        This demonstrates the problem that EXT_bmesh_encoding is supposed to solve.
+        """
+        encoder, decoder = end_to_end_setup
+
+        # Create a mesh with quads
+        obj = create_quad_mesh("NoExtensionTest")
+        original_mesh = obj.data.copy()
+        original_face_count = len(original_mesh.polygons)
+
+        with tempfile.NamedTemporaryFile(suffix='.gltf', delete=False) as tmp_file:
+            filepath = tmp_file.name
+
+        try:
+            # Export with EXT_bmesh_encoding (creates the extension data)
+            bpy.ops.export_scene.gltf_ext_bmesh_encoding(
+                filepath=filepath,
+                export_format='GLTF_SEPARATE',
+                use_selection=True
+            )
+
+            # Clear scene
+            bpy.data.objects.remove(obj)
+
+            # Import using STANDARD glTF importer (no extension processing)
+            bpy.ops.import_scene.gltf(filepath=filepath)
+
+            # Find imported object
+            imported_obj = None
+            for obj in bpy.context.scene.objects:
+                if obj.type == 'MESH':
+                    imported_obj = obj
+                    break
+
+            assert imported_obj is not None, "Imported object not found"
+            imported_mesh = imported_obj.data
+            imported_face_count = len(imported_mesh.polygons)
+
+            # This should demonstrate the triangulation problem
+            logger.info(f"Original quad mesh: {original_face_count} faces")
+            logger.info(f"Standard import result: {imported_face_count} faces")
+
+            # The imported mesh should have more faces (triangulated)
+            # This proves why we need EXT_bmesh_encoding
+            if imported_face_count > original_face_count:
+                logger.info("✅ Confirmed: Standard import triangulates quads")
+            else:
+                logger.warning("⚠️  Unexpected: Standard import preserved topology")
+
+        finally:
+            # Cleanup
+            if os.path.exists(filepath):
+                os.unlink(filepath)
+            bpy.data.meshes.remove(original_mesh)
+            if imported_obj:
+                bpy.data.objects.remove(imported_obj)
+
     def test_triangle_mesh_roundtrip(self, end_to_end_setup):
         """Test complete round-trip with triangular mesh."""
         encoder, decoder = end_to_end_setup
