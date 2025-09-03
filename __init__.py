@@ -12,6 +12,10 @@ from bpy.types import AddonPreferences, Operator, Panel
 
 from . import exporter
 from . import ui
+from . import gltf_extension
+from .logger import get_logger
+
+logger = get_logger(__name__)
 
 
 bl_info = {
@@ -62,16 +66,56 @@ class EXTBMeshEncodingPreferences(AddonPreferences):
 
 def register():
     """Register the addon."""
-    bpy.utils.register_class(EXTBMeshEncodingPreferences)
-    exporter.register()
-    ui.register()
+    try:
+        logger.info("Registering EXT_bmesh_encoding addon...")
+
+        # Register preferences first
+        bpy.utils.register_class(EXTBMeshEncodingPreferences)
+        logger.debug("Preferences class registered")
+
+        # Register exporter
+        exporter.register()
+        logger.debug("Exporter registered")
+
+        # Register UI
+        ui.register()
+        logger.debug("UI registered")
+
+        # Register glTF extension
+        gltf_extension.EXT_bmesh_encoding.register()
+        logger.debug("glTF extension registered")
+
+        logger.info("EXT_bmesh_encoding addon registered successfully")
+
+    except Exception as e:
+        logger.error(f"Failed to register EXT_bmesh_encoding addon: {e}")
+        # Don't re-raise - allow Blender to continue loading other addons
+        # The addon will still be listed but may not function properly
 
 
 def unregister():
     """Unregister the addon."""
-    ui.unregister()
-    exporter.unregister()
-    bpy.utils.unregister_class(EXTBMeshEncodingPreferences)
+    try:
+        logger.info("Unregistering EXT_bmesh_encoding addon...")
+
+        # Unregister in reverse order
+        gltf_extension.EXT_bmesh_encoding.unregister()
+        logger.debug("glTF extension unregistered")
+
+        ui.unregister()
+        logger.debug("UI unregistered")
+
+        exporter.unregister()
+        logger.debug("Exporter unregistered")
+
+        bpy.utils.unregister_class(EXTBMeshEncodingPreferences)
+        logger.debug("Preferences class unregistered")
+
+        logger.info("EXT_bmesh_encoding addon unregistered successfully")
+
+    except Exception as e:
+        logger.error(f"Failed to unregister EXT_bmesh_encoding addon: {e}")
+        # Don't re-raise - allow Blender to continue unloading other addons
 
 
 if __name__ == "__main__":

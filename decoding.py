@@ -9,8 +9,7 @@ import bpy
 from bmesh.types import BMesh, BMFace, BMLoop, BMVert, BMEdge
 from mathutils import Vector
 
-from ...common.gltf import parse_glb
-from ...common.logger import get_logger
+from .logger import get_logger
 
 logger = get_logger(__name__)
 
@@ -42,6 +41,14 @@ class BmeshDecoder:
 
     def __init__(self):
         pass
+
+    def decode_extension_to_bmesh(self, extension_data: Dict[str, Any], parse_result: Any) -> Optional[BMesh]:
+        """
+        Decode EXT_bmesh_encoding extension data to BMesh.
+
+        This is the main entry point for decoding extension data from glTF files.
+        """
+        return self.decode_gltf_extension_to_bmesh(extension_data, parse_result)
 
     def decode_gltf_extension_to_bmesh(self, extension_data: Dict[str, Any], parse_result: Any) -> Optional[BMesh]:
         """
@@ -651,12 +658,17 @@ class BmeshDecoder:
                 logger.warning(f"EXT_bmesh_encoding only supports buffer 0, got buffer {buffer_index}")
                 return None
 
-            # ParseResult doesn't store buffer data directly, need to re-parse the file
+            # Use Blender's glTF buffer access instead of custom parsing
             try:
-                _, buffer0_bytes = parse_glb(parse_result.filepath.read_bytes())
-                buffer_data = buffer0_bytes
+                # Try to access buffer data through Blender's glTF import system
+                if hasattr(parse_result, 'buffers') and parse_result.buffers:
+                    buffer_data = parse_result.buffers[buffer_index]
+                    logger.debug(f"Using Blender's glTF buffer access for buffer {buffer_index}")
+                else:
+                    logger.error("No buffer data available through Blender's glTF system")
+                    return None
             except Exception as e:
-                logger.error(f"Failed to re-parse glTF file for buffer access: {e}")
+                logger.error(f"Failed to access glTF buffer through Blender: {e}")
                 return None
 
             byte_offset = buffer_view.get('byteOffset', 0)
