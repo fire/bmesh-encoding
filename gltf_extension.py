@@ -69,31 +69,62 @@ class EXT_bmesh_encoding:
 
     @staticmethod
     def _try_register_gltf_extension():
-        """Attempt to register with glTF exporter if available."""
+        """Check if glTF system is available and log extension discovery status."""
         try:
-            from io_scene_gltf2 import export_gltf2, import_gltf2
+            # Handle Blender 4.5+ glTF addon structure change
+            export_gltf2, import_gltf2 = EXT_bmesh_encoding._get_gltf_modules()
 
-            # Add extension to export hooks
-            if hasattr(export_gltf2, 'register_extension'):
-                export_gltf2.register_extension(ext_bmesh_encoding)
-                logger.debug("Registered EXT_bmesh_encoding with glTF export hooks")
+            if export_gltf2 is None or import_gltf2 is None:
+                logger.warning("Could not access glTF modules - extension discovery may not work")
+                return False
 
-            # Add extension to import hooks - THIS IS CRITICAL
-            if hasattr(import_gltf2, 'register_extension'):
-                import_gltf2.register_extension(ext_bmesh_encoding)
-                logger.debug("Registered EXT_bmesh_encoding with glTF import hooks")
-            else:
-                logger.warning("glTF import system does not have register_extension method")
-                logger.warning("Available import_gltf2 methods: " + str([m for m in dir(import_gltf2) if not m.startswith('_')]))
+            # The glTF-Blender-IO addon automatically discovers extensions by looking for
+            # glTF2ImportUserExtension and glTF2ExportUserExtension attributes on addon modules
+            # No explicit registration is needed - the addon finds our extension classes automatically
 
-            # Verify registration worked
-            EXT_bmesh_encoding._verify_registration()
-
+            logger.debug("glTF modules are available - extensions will be discovered automatically")
             return True
 
-        except ImportError as e:
-            logger.warning(f"Could not import glTF modules: {e}")
+        except Exception as e:
+            logger.warning(f"Could not access glTF modules: {e}")
             return False
+
+    @staticmethod
+    def _get_gltf_modules():
+        """Get glTF export and import modules, handling different Blender versions."""
+        import bpy
+
+        # Check Blender version for appropriate import structure
+        blender_version = bpy.app.version
+        logger.debug(f"Blender version: {blender_version}")
+
+        # Try Blender 4.5+ structure first (new structure)
+        if blender_version >= (4, 5, 0):
+            try:
+                from io_scene_gltf2.io import exp as export_gltf2, imp as import_gltf2
+                logger.debug("Using Blender 4.5+ glTF module structure")
+                return export_gltf2, import_gltf2
+            except ImportError as e:
+                logger.debug(f"Blender 4.5+ structure failed: {e}")
+
+        # Try alternative Blender 4.5+ structure
+        if blender_version >= (4, 5, 0):
+            try:
+                from io_scene_gltf2.io.exp import gltf2_blender_export as export_gltf2
+                from io_scene_gltf2.io.imp import gltf2_blender_import as import_gltf2
+                logger.debug("Using alternative Blender 4.5+ glTF module structure")
+                return export_gltf2, import_gltf2
+            except ImportError as e:
+                logger.debug(f"Alternative Blender 4.5+ structure failed: {e}")
+
+        # Fallback to old Blender structure (pre-4.5)
+        try:
+            from io_scene_gltf2 import export_gltf2, import_gltf2
+            logger.debug("Using legacy glTF module structure (pre-Blender 4.5)")
+            return export_gltf2, import_gltf2
+        except ImportError as e:
+            logger.warning(f"Could not import glTF modules with any known structure: {e}")
+            return None, None
 
     @staticmethod
     def _setup_deferred_registration():
@@ -124,20 +155,9 @@ class EXT_bmesh_encoding:
         # Clean up any deferred registration handlers
         EXT_bmesh_encoding._cleanup_deferred_registration()
 
-        # Unregister from glTF exporter if available
-        try:
-            from io_scene_gltf2 import export_gltf2, import_gltf2
-
-            if hasattr(export_gltf2, 'unregister_extension'):
-                export_gltf2.unregister_extension(ext_bmesh_encoding)
-
-            if hasattr(import_gltf2, 'unregister_extension'):
-                import_gltf2.unregister_extension(ext_bmesh_encoding)
-
-            logger.info("EXT_bmesh_encoding unregistered from glTF exporter")
-
-        except ImportError:
-            pass
+        # The glTF-Blender-IO addon automatically discovers extensions
+        # No explicit unregistration is needed since there's no explicit registration
+        logger.info("EXT_bmesh_encoding unregistered from Blender")
 
     @staticmethod
     def _cleanup_deferred_registration():
@@ -155,114 +175,30 @@ class EXT_bmesh_encoding:
 
     @staticmethod
     def _log_registration_status():
-        """Log the current registration status of the extension hooks."""
+        """Log the current extension discovery status."""
         try:
-            # Check if glTF modules are available
-            try:
-                from io_scene_gltf2 import export_gltf2, import_gltf2
-                gltf_available = True
-            except ImportError:
-                gltf_available = False
-                logger.warning("glTF modules not available for extension registration check")
+            # Use version-aware module detection
+            export_gltf2, import_gltf2 = EXT_bmesh_encoding._get_gltf_modules()
+
+            gltf_available = export_gltf2 is not None and import_gltf2 is not None
+
+            if not gltf_available:
+                logger.warning("glTF modules not available for extension discovery check")
                 return
 
-            # Check export extension registration
-            export_registered = False
-            if hasattr(export_gltf2, 'registered_extensions'):
-                export_registered = ext_bmesh_encoding in export_gltf2.registered_extensions
-            elif hasattr(export_gltf2, 'extensions'):
-                export_registered = ext_bmesh_encoding in export_gltf2.extensions
-
-            # Check import extension registration
-            import_registered = False
-            if hasattr(import_gltf2, 'registered_extensions'):
-                import_registered = ext_bmesh_encoding in import_gltf2.registered_extensions
-            elif hasattr(import_gltf2, 'extensions'):
-                import_registered = ext_bmesh_encoding in import_gltf2.extensions
-
-            logger.info("EXT_bmesh_encoding registration status:")
+            # The glTF-Blender-IO addon automatically discovers extensions
+            # by looking for glTF2ImportUserExtension and glTF2ExportUserExtension
+            # attributes on enabled addon modules
+            logger.info("EXT_bmesh_encoding extension discovery status:")
             logger.info(f"  glTF modules available: {gltf_available}")
-            logger.info(f"  Export extension registered: {export_registered}")
-            logger.info(f"  Import extension registered: {import_registered}")
-
-            if export_registered and import_registered:
-                logger.info("✅ EXT_bmesh_encoding extension hooks are properly registered")
-            else:
-                logger.warning("❌ EXT_bmesh_encoding extension hooks registration incomplete")
-                if not export_registered:
-                    logger.warning("  - Export extension NOT registered")
-                if not import_registered:
-                    logger.warning("  - Import extension NOT registered")
+            logger.info("  Extension discovery: automatic (no explicit registration needed)")
+            logger.info("  Extension classes available: glTF2ImportUserExtension, glTF2ExportUserExtension")
+            logger.info("✅ EXT_bmesh_encoding extension hooks will be discovered automatically by glTF-Blender-IO")
 
         except Exception as e:
-            logger.error(f"Failed to check extension registration status: {e}")
+            logger.error(f"Failed to check extension discovery status: {e}")
 
-    @staticmethod
-    def _verify_registration():
-        """Verify that the extension was actually registered with glTF system."""
-        try:
-            from io_scene_gltf2 import export_gltf2, import_gltf2
 
-            # Check if our extension is in the registered extensions
-            export_ok = False
-            import_ok = False
-
-            # Check export registration
-            if hasattr(export_gltf2, 'registered_extensions'):
-                export_ok = ext_bmesh_encoding in export_gltf2.registered_extensions
-            elif hasattr(export_gltf2, 'extensions'):
-                export_ok = ext_bmesh_encoding in export_gltf2.extensions
-
-            # Check import registration - THIS IS THE CRITICAL ONE
-            if hasattr(import_gltf2, 'registered_extensions'):
-                import_ok = ext_bmesh_encoding in import_gltf2.registered_extensions
-            elif hasattr(import_gltf2, 'extensions'):
-                import_ok = ext_bmesh_encoding in import_gltf2.extensions
-
-            if export_ok and import_ok:
-                logger.info("✅ EXT_bmesh_encoding successfully registered with both export and import systems")
-            else:
-                logger.warning("❌ EXT_bmesh_encoding registration verification failed")
-                if not export_ok:
-                    logger.warning("  - Export registration failed")
-                if not import_ok:
-                    logger.warning("  - Import registration failed - THIS IS THE PROBLEM!")
-
-                # Try to diagnose the issue
-                EXT_bmesh_encoding._diagnose_registration_issue()
-
-        except Exception as e:
-            logger.error(f"Failed to verify extension registration: {e}")
-
-    @staticmethod
-    def _diagnose_registration_issue():
-        """Diagnose why extension registration might be failing."""
-        try:
-            from io_scene_gltf2 import export_gltf2, import_gltf2
-
-            logger.info("Diagnosing extension registration issue...")
-
-            # Check what methods are available
-            logger.info("Available export_gltf2 methods: " + str([m for m in dir(export_gltf2) if not m.startswith('_')]))
-            logger.info("Available import_gltf2 methods: " + str([m for m in dir(import_gltf2) if not m.startswith('_')]))
-
-            # Check if extensions collections exist
-            if hasattr(export_gltf2, 'registered_extensions'):
-                logger.info(f"export_gltf2.registered_extensions exists with {len(export_gltf2.registered_extensions)} items")
-            if hasattr(export_gltf2, 'extensions'):
-                logger.info(f"export_gltf2.extensions exists with {len(export_gltf2.extensions)} items")
-
-            if hasattr(import_gltf2, 'registered_extensions'):
-                logger.info(f"import_gltf2.registered_extensions exists with {len(import_gltf2.registered_extensions)} items")
-            if hasattr(import_gltf2, 'extensions'):
-                logger.info(f"import_gltf2.extensions exists with {len(import_gltf2.extensions)} items")
-
-            # Check if register_extension methods exist
-            logger.info(f"export_gltf2 has register_extension: {hasattr(export_gltf2, 'register_extension')}")
-            logger.info(f"import_gltf2 has register_extension: {hasattr(import_gltf2, 'register_extension')}")
-
-        except Exception as e:
-            logger.error(f"Failed to diagnose registration issue: {e}")
 
     def export_node(self, gltf2_object: Any, blender_object: bpy.types.Object, export_settings: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """

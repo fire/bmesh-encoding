@@ -167,15 +167,55 @@ def menu_func_export(self, context):
     )
 
 
+class EXTBMeshEncodingExporter:
+    """Exporter class for EXT_bmesh_encoding extension hooks."""
+
+    def __init__(self):
+        """Initialize the exporter."""
+        self.encoder = BmeshEncoder()
+
+    def process_export_hook(self, gltf2_object, blender_object, export_settings):
+        """Process EXT_bmesh_encoding during glTF export."""
+        try:
+            logger.info("Processing EXT_bmesh_encoding for glTF export")
+
+            # Check if EXT_bmesh_encoding is enabled in export settings
+            if not getattr(export_settings, 'export_ext_bmesh_encoding', True):
+                logger.info("EXT_bmesh_encoding disabled in export settings")
+                return
+
+            # Process mesh objects for EXT_bmesh_encoding
+            if hasattr(blender_object, 'type') and blender_object.type == 'MESH':
+                logger.info(f"Processing mesh object: {blender_object.name}")
+
+                # Get the mesh data
+                mesh = blender_object.data
+
+                # Encode BMesh topology to extension data
+                extension_data = self.encoder.encode_bmesh_to_gltf_extension(mesh, export_settings)
+
+                if extension_data:
+                    # Add extension to glTF object
+                    if not hasattr(gltf2_object, 'extensions'):
+                        gltf2_object.extensions = {}
+
+                    gltf2_object.extensions['EXT_bmesh_encoding'] = extension_data
+                    logger.info("Added EXT_bmesh_encoding extension to glTF object")
+                else:
+                    logger.warning("Failed to encode BMesh topology")
+
+        except Exception as e:
+            logger.error(f"Error processing EXT_bmesh_encoding during export: {e}")
+
+
 def register():
     """Register the exporter."""
-    bpy.utils.register_class(ExportGLTFWithEXTBmeshEncoding)
-    bpy.utils.register_class(EXTBMeshEncoding_PT_ExportPanel)
-    bpy.types.TOPBAR_MT_file_export.append(menu_func_export)
+    # Note: We don't register menu items since glTF-Blender-IO already provides
+    # standard glTF import/export. Our extension hooks are discovered automatically.
+    pass
 
 
 def unregister():
     """Unregister the exporter."""
-    bpy.types.TOPBAR_MT_file_export.remove(menu_func_export)
-    bpy.utils.unregister_class(EXTBMeshEncoding_PT_ExportPanel)
-    bpy.utils.unregister_class(ExportGLTFWithEXTBmeshEncoding)
+    # No menu items to unregister since we don't register any
+    pass
