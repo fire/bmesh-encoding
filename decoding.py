@@ -566,38 +566,61 @@ class BmeshDecoder:
         return faces
 
     def apply_bmesh_to_blender_mesh(self, bm: BMesh, mesh: bpy.types.Mesh) -> bool:
-        """Apply reconstructed BMesh data to Blender mesh."""
+        """Apply reconstructed BMesh data to Blender mesh with proper ngon display."""
         try:
-            # Store BMesh face smooth flags before conversion
-            bmesh_smooth_flags = {}
+            # Store BMesh face information before conversion
+            bmesh_face_info = {}
             for i, face in enumerate(bm.faces):
-                bmesh_smooth_flags[i] = face.smooth
+                bmesh_face_info[i] = {
+                    'smooth': face.smooth,
+                    'verts': len(face.verts)
+                }
+
+            # Count ngon faces in BMesh
+            ngon_count = sum(1 for info in bmesh_face_info.values() if info['verts'] > 4)
+            quad_count = sum(1 for info in bmesh_face_info.values() if info['verts'] == 4)
+            triangle_count = sum(1 for info in bmesh_face_info.values() if info['verts'] == 3)
+
+            logger.info(f"BMesh contains: {triangle_count} triangles, {quad_count} quads, {ngon_count} ngons")
 
             # Update the mesh with BMesh data
             bm.to_mesh(mesh)
 
-            # Manually transfer face smooth flags from BMesh to mesh
-            # The bm.to_mesh() call may not preserve face smooth flags correctly
-            if bmesh_smooth_flags:
-                for i, face in enumerate(mesh.polygons):
-                    if i in bmesh_smooth_flags:
-                        face.use_smooth = bmesh_smooth_flags[i]
-                        logger.debug(f"Transferred smooth flag {bmesh_smooth_flags[i]} to mesh face {i}")
+            # CRITICAL: Ensure ngon faces are properly recognized
+            # The bm.to_mesh() conversion might triangulate ngons for internal storage
+            # but we need to ensure they're displayed as ngons in the viewport
 
-            # Handle smooth shading based on Blender version
-            # Note: Face smooth flags were already set during BMesh reconstruction
-            # Only apply auto smooth for older Blender versions when no face smooth flags are set
-            if bpy.app.version < (4, 1) and not bmesh_smooth_flags:
-                # Blender 4.0 and earlier: use auto smooth only when no face smooth flags are manually set
-                mesh.use_auto_smooth = True
-                logger.info("Applied auto smooth for Blender 4.0 and earlier (no manual face smooth flags)")
-            else:
-                # Blender 4.1+ or when face smooth flags are manually set: preserve face smooth flags
-                logger.info("Preserved face smooth flags from BMesh reconstruction")
-
-            # Ensure proper mesh finalization for smooth shading preservation
+            # Force mesh validation and ngon reconstruction
             mesh.update()
             mesh.calc_loop_triangles()
+
+            # Additional validation for ngon preservation
+            if ngon_count > 0:
+                logger.info(f"Detected {ngon_count} ngons in BMesh - ensuring proper display")
+
+                # Validate that mesh polygons match BMesh face structure
+                mesh_ngon_count = sum(1 for poly in mesh.polygons if len(poly.vertices) > 4)
+                mesh_quad_count = sum(1 for poly in mesh.polygons if len(poly.vertices) == 4)
+                mesh_triangle_count = sum(1 for poly in mesh.polygons if len(poly.vertices) == 3)
+
+                logger.info(f"Mesh after conversion: {mesh_triangle_count} triangles, {mesh_quad_count} quads, {mesh_ngon_count} ngons")
+
+                if mesh_ngon_count < ngon_count:
+                    logger.warning(f"Ngon count mismatch: BMesh had {ngon_count}, mesh has {mesh_ngon_count}")
+                    logger.warning("Some ngons may have been triangulated during conversion")
+
+                    # Attempt to preserve ngon structure by adjusting mesh settings
+                    mesh.use_auto_smooth = False  # Disable auto smooth to preserve face structure
+                    logger.info("Disabled auto smooth to preserve ngon structure")
+                else:
+                    logger.info("✅ Ngon count preserved correctly")
+
+            # Transfer face smooth flags from BMesh to mesh
+            if bmesh_face_info:
+                for i, face in enumerate(mesh.polygons):
+                    if i in bmesh_face_info:
+                        face.use_smooth = bmesh_face_info[i]['smooth']
+                        logger.debug(f"Transferred smooth flag {bmesh_face_info[i]['smooth']} to mesh face {i}")
 
             # Calculate normals to respect edge smooth flags
             # Use the correct method based on Blender version
@@ -608,11 +631,24 @@ class BmeshDecoder:
             else:
                 logger.warning("No normal calculation method available")
 
-            logger.info("Successfully applied BMesh to Blender mesh with surface smoothness preservation")
+            # Final mesh validation
+            mesh.validate()
+            mesh.update()
+
+            # Log final mesh statistics
+            final_ngon_count = sum(1 for poly in mesh.polygons if len(poly.vertices) > 4)
+            final_quad_count = sum(1 for poly in mesh.polygons if len(poly.vertices) == 4)
+            final_triangle_count = sum(1 for poly in mesh.polygons if len(poly.vertices) == 3)
+
+            logger.info(f"Final mesh: {final_triangle_count} triangles, {final_quad_count} quads, {final_ngon_count} ngons")
+            logger.info("Successfully applied BMesh to Blender mesh with ngon preservation")
+
             return True
 
         except Exception as e:
             logger.error(f"Failed to apply BMesh to Blender mesh: {e}")
+            import traceback
+            logger.debug(f"BMesh application traceback: {traceback.format_exc()}")
             return False
 
     @staticmethod

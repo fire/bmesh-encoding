@@ -76,14 +76,23 @@ class EXT_bmesh_encoding:
             # Add extension to export hooks
             if hasattr(export_gltf2, 'register_extension'):
                 export_gltf2.register_extension(ext_bmesh_encoding)
+                logger.debug("Registered EXT_bmesh_encoding with glTF export hooks")
 
-            # Add extension to import hooks
+            # Add extension to import hooks - THIS IS CRITICAL
             if hasattr(import_gltf2, 'register_extension'):
                 import_gltf2.register_extension(ext_bmesh_encoding)
+                logger.debug("Registered EXT_bmesh_encoding with glTF import hooks")
+            else:
+                logger.warning("glTF import system does not have register_extension method")
+                logger.warning("Available import_gltf2 methods: " + str([m for m in dir(import_gltf2) if not m.startswith('_')]))
+
+            # Verify registration worked
+            EXT_bmesh_encoding._verify_registration()
 
             return True
 
-        except ImportError:
+        except ImportError as e:
+            logger.warning(f"Could not import glTF modules: {e}")
             return False
 
     @staticmethod
@@ -187,6 +196,73 @@ class EXT_bmesh_encoding:
 
         except Exception as e:
             logger.error(f"Failed to check extension registration status: {e}")
+
+    @staticmethod
+    def _verify_registration():
+        """Verify that the extension was actually registered with glTF system."""
+        try:
+            from io_scene_gltf2 import export_gltf2, import_gltf2
+
+            # Check if our extension is in the registered extensions
+            export_ok = False
+            import_ok = False
+
+            # Check export registration
+            if hasattr(export_gltf2, 'registered_extensions'):
+                export_ok = ext_bmesh_encoding in export_gltf2.registered_extensions
+            elif hasattr(export_gltf2, 'extensions'):
+                export_ok = ext_bmesh_encoding in export_gltf2.extensions
+
+            # Check import registration - THIS IS THE CRITICAL ONE
+            if hasattr(import_gltf2, 'registered_extensions'):
+                import_ok = ext_bmesh_encoding in import_gltf2.registered_extensions
+            elif hasattr(import_gltf2, 'extensions'):
+                import_ok = ext_bmesh_encoding in import_gltf2.extensions
+
+            if export_ok and import_ok:
+                logger.info("✅ EXT_bmesh_encoding successfully registered with both export and import systems")
+            else:
+                logger.warning("❌ EXT_bmesh_encoding registration verification failed")
+                if not export_ok:
+                    logger.warning("  - Export registration failed")
+                if not import_ok:
+                    logger.warning("  - Import registration failed - THIS IS THE PROBLEM!")
+
+                # Try to diagnose the issue
+                EXT_bmesh_encoding._diagnose_registration_issue()
+
+        except Exception as e:
+            logger.error(f"Failed to verify extension registration: {e}")
+
+    @staticmethod
+    def _diagnose_registration_issue():
+        """Diagnose why extension registration might be failing."""
+        try:
+            from io_scene_gltf2 import export_gltf2, import_gltf2
+
+            logger.info("Diagnosing extension registration issue...")
+
+            # Check what methods are available
+            logger.info("Available export_gltf2 methods: " + str([m for m in dir(export_gltf2) if not m.startswith('_')]))
+            logger.info("Available import_gltf2 methods: " + str([m for m in dir(import_gltf2) if not m.startswith('_')]))
+
+            # Check if extensions collections exist
+            if hasattr(export_gltf2, 'registered_extensions'):
+                logger.info(f"export_gltf2.registered_extensions exists with {len(export_gltf2.registered_extensions)} items")
+            if hasattr(export_gltf2, 'extensions'):
+                logger.info(f"export_gltf2.extensions exists with {len(export_gltf2.extensions)} items")
+
+            if hasattr(import_gltf2, 'registered_extensions'):
+                logger.info(f"import_gltf2.registered_extensions exists with {len(import_gltf2.registered_extensions)} items")
+            if hasattr(import_gltf2, 'extensions'):
+                logger.info(f"import_gltf2.extensions exists with {len(import_gltf2.extensions)} items")
+
+            # Check if register_extension methods exist
+            logger.info(f"export_gltf2 has register_extension: {hasattr(export_gltf2, 'register_extension')}")
+            logger.info(f"import_gltf2 has register_extension: {hasattr(import_gltf2, 'register_extension')}")
+
+        except Exception as e:
+            logger.error(f"Failed to diagnose registration issue: {e}")
 
     def export_node(self, gltf2_object: Any, blender_object: bpy.types.Object, export_settings: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """
