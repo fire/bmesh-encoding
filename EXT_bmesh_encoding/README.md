@@ -1,4 +1,4 @@
-# EXT_structural_metadata BMesh Implementation
+# EXT_structural_metadata with BMesh
 
 ## Contributors
 
@@ -25,7 +25,7 @@ The BMesh data structure is described in:
 
 While glTF can only deliver a polygon mesh after it's been decomposed into triangles, there are cases where access to the full BMesh topology is still useful. BMesh provides a non-manifold boundary representation with vertices, edges, loops, and faces that enables complex geometric operations.
 
-This implementation provides **property table-based BMesh encoding** that stores complete topology information in EXT_structural_metadata property tables for optimal performance while maintaining full glTF 2.0 compatibility.
+This implementation provides **property table-based BMesh encoding** that stores complete topology information in EXT_structural_metadata property tables for performance while maintaining full glTF 2.0 compatibility.
 
 The `EXT_structural_metadata` glTF extension solves the problem of topological data loss when models with quads and n-gons are converted to glTF's triangle-only format. It works by embedding the **BMesh** data structure, allowing for reconstruction of the original model.
 
@@ -124,13 +124,12 @@ Like FB_ngon_encoding, the **order of triangles and per-triangle vertex indices*
 - For each BMesh face `f`, choose one identifying vertex `v(f)`
 - Break the face into a triangle fan, all anchored at `v(f)`
 - **Ensure `v(f) != v(f')` for consecutive faces** (mandatory requirement for unambiguous reconstruction)
-- Use enhanced vertex selection for optimal BMesh reconstruction
 
 ### Encoding Process (Implicit Layer)
 
-1. **BMesh Face Analysis**: Analyze BMesh faces for optimal triangulation
+1. **BMesh Face Analysis**: Analyze BMesh faces for triangulation
 2. **Enhanced Anchor Selection**: Choose anchor vertex to minimize reconstruction ambiguity
-3. **Triangle Fan Generation**: Create triangle fans with optimal vertex ordering
+3. **Triangle Fan Generation**: Create triangle fans with vertex ordering
 4. **Standard glTF Output**: Produce standard glTF triangles following triangle fan pattern
 
 ### Reconstruction Process
