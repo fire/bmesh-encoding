@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT OR GPL-3.0-or-later
+# SPDX-License-Identifier: MIT
 """EXT_bmesh_encoding import and decoding algorithms."""
 
 import struct

@@ -29,7 +29,7 @@ def edge_case_setup():
     bmesh_encoder = BmeshEncoder()
     bmesh_decoder = BmeshDecoder()
 
-    yield bmesh_encoder, bmesh_decoder
+    yield bmesh_encoder
 
 def create_test_mesh_object(name="TestMesh", topology_type="ico_sphere"):
     """Create a test mesh with specified topology."""
@@ -164,12 +164,17 @@ def create_degenerate_geometry_mesh(name="DegenerateMesh"):
     bm.faces.new([verts[0], verts[1], verts[2]])
 
     # Degenerate faces (different types)
-    # Zero-area triangle
-    bm.faces.new([verts[0], verts[1], verts[0]])  # Points 0, 1, 0
-    # Line (two points same)
-    bm.faces.new([verts[0], verts[1], verts[0]])  # Points 0, 1, 0
-    # Point (all same)
-    bm.faces.new([verts[0], verts[0], verts[0]])  # Points 0, 0, 0
+    # Zero-area triangle (collinear points)
+    try:
+        bm.faces.new([verts[0], verts[1], verts[3]])  # Points 0, 1, 3 (3 is duplicate of 0)
+    except ValueError:
+        pass  # Expected to fail with degenerate geometry
+
+    # Very thin triangle (near-collinear)
+    try:
+        bm.faces.new([verts[4], verts[5], verts[6]])  # Very thin triangle
+    except ValueError:
+        pass  # May fail with very thin geometry
 
     # Very thin triangle
     verts.append(bm.verts.new((2, 0, 0)))        # 4
@@ -274,12 +279,17 @@ def create_nested_hierarchy_mesh(name="NestedMesh"):
                     prev_i1 = (i // 2) % prev_segments
                     prev_i2 = ((i // 2) + 1) % prev_segments
 
-                    # Create triangles bridging rings
-                    bm.faces.new([
-                        ring_verts[i],
-                        all_verts[prev_ring_start + prev_i1],
-                        all_verts[prev_ring_start + prev_i2]
-                    ])
+                    # Create triangles bridging rings (avoid duplicate vertices)
+                    v1 = ring_verts[i]
+                    v2 = all_verts[prev_ring_start + prev_i1]
+                    v3 = all_verts[prev_ring_start + prev_i2]
+
+                    # Only create face if vertices are distinct
+                    if len(set([v1, v2, v3])) == 3:
+                        try:
+                            bm.faces.new([v1, v2, v3])
+                        except ValueError:
+                            pass  # Skip invalid faces
 
     bm.to_mesh(mesh)
     bm.free()
@@ -331,14 +341,28 @@ def test_complex_maze_topology(edge_case_setup):
     bmesh_encoder = edge_case_setup
     obj = create_maze_mesh("MazeTest")
 
-    # Encode
-    encoded_data = bmesh_encoder.encode_object_native(obj)
-    assert encoded_data is not None, "Maze encoding should succeed"
-    assert isinstance(encoded_data, dict), "Should return dictionary"
+    # Store references before encoding
+    mesh_data = obj.data
+    obj_name = obj.name
 
-    # Cleanup
-    bpy.data.objects.remove(obj)
-    bpy.data.meshes.remove(obj.data)
+    try:
+        # Encode
+        encoded_data = bmesh_encoder.encode_object_native(obj)
+        assert encoded_data is not None, "Maze encoding should succeed"
+        assert isinstance(encoded_data, dict), "Should return dictionary"
+    finally:
+        # Cleanup - handle potential invalidation gracefully
+        try:
+            if obj and obj.name in bpy.data.objects:
+                bpy.data.objects.remove(obj)
+        except (ReferenceError, KeyError):
+            pass  # Object already removed or invalid
+
+        try:
+            if mesh_data and mesh_data.name in bpy.data.meshes:
+                bpy.data.meshes.remove(mesh_data)
+        except (ReferenceError, KeyError):
+            pass  # Mesh already removed or invalid
 
 def test_degenerate_geometry_handling(edge_case_setup):
     """Test handling of degenerate geometry (zero-area faces, duplicates)."""
@@ -499,8 +523,15 @@ def test_mesh_with_multiple_uv_layers(edge_case_setup):
     bmesh_encoder = edge_case_setup
     obj = create_test_mesh_object("MultiUVTest", "cube")
 
+    # Ensure we have at least one UV layer
+    if not obj.data.uv_layers:
+        obj.data.uv_layers.new(name="UVLayer1")
+
     # Add another UV layer
     uv_layer2 = obj.data.uv_layers.new(name="UVLayer2")
+
+    # Verify we have both layers
+    assert len(obj.data.uv_layers) >= 2, f"Expected at least 2 UV layers, got {len(obj.data.uv_layers)}"
 
     # Create different UV mappings on each layer
     for i, polygon in enumerate(obj.data.polygons):

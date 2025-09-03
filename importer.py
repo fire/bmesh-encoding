@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT OR GPL-3.0-or-later
+# SPDX-License-Identifier: MIT
 """Standalone glTF importer with EXT_bmesh_encoding support."""
 
 import bpy

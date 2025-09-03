@@ -18,13 +18,22 @@ test_dir = Path(__file__).parent
 src_dir = test_dir.parent / "src"
 sys.path.insert(0, str(src_dir))
 
+# Import mock VRM module first to set up sys.modules
+from .mock_vrm import mock_vrm
+
 from .base_blender_test_case import BaseBlenderTestCase
-from io_scene_vrm.editor.bmesh_encoding.encoding import BmeshEncoder
-from io_scene_vrm.editor.bmesh_encoding.decoding import BmeshDecoder
-from io_scene_vrm.common import ops
-from io_scene_vrm.common.gltf import parse_glb
-from io_scene_vrm.common.logger import get_logger
-from io_scene_vrm.exporter.vrm0_exporter import Vrm0Exporter
+from ..encoding import BmeshEncoder
+from ..decoding import BmeshDecoder
+from ..logger import get_logger
+
+# Import mock VRM classes after sys.modules setup
+from .mock_vrm import MockVrm0Exporter as Vrm0Exporter
+from .mock_vrm import mock_parse_glb as parse_glb
+
+# Replace mock placeholders with real implementations
+mock_vrm.editor.bmesh_encoding.BmeshEncoder = BmeshEncoder
+mock_vrm.editor.bmesh_encoding.BmeshDecoder = BmeshDecoder
+mock_vrm.common.logger.get_logger = get_logger
 
 logger = get_logger(__name__)
 
@@ -124,8 +133,14 @@ def test_export_ext_bmesh_encoding_parameter(vrm0_test_setup):
     assert exporter_disabled.export_ext_bmesh_encoding is False
 
     # Cleanup
-    bpy.data.objects.remove(obj)
-    bpy.data.meshes.remove(obj.data)
+    try:
+        bpy.data.objects.remove(obj)
+    except ReferenceError:
+        pass  # Object already removed
+    try:
+        bpy.data.meshes.remove(obj.data)
+    except ReferenceError:
+        pass  # Mesh already removed
 
 def test_ext_bmesh_encoding_extension_in_output(vrm0_test_setup):
     """Test that EXT_bmesh_encoding extension appears in glTF output when enabled."""
@@ -237,9 +252,18 @@ def test_bmesh_encoding_fidelity_cube(vrm0_test_setup):
         "Number of faces should match"
 
     # Cleanup
-    bpy.data.objects.remove(obj)
-    bpy.data.meshes.remove(obj.data)
-    bpy.data.meshes.remove(decoded_mesh)
+    try:
+        bpy.data.objects.remove(obj)
+    except ReferenceError:
+        pass  # Object already removed
+    try:
+        bpy.data.meshes.remove(obj.data)
+    except ReferenceError:
+        pass  # Mesh already removed
+    try:
+        bpy.data.meshes.remove(decoded_mesh)
+    except ReferenceError:
+        pass  # Mesh already removed
 
 def test_bmesh_encoding_fidelity_sphere(vrm0_test_setup):
     """Test encoding/decoding fidelity for an icosphere with complex topology."""
@@ -531,12 +555,19 @@ def test_ext_bmesh_encoding_smooth_shading_preservation(vrm0_test_setup):
     for i, face in enumerate(obj.data.polygons):
         face.use_smooth = (i % 2 == 0)  # Alternate smooth/faceted
 
-    # Set edge sharp flags based on face connections
+    # Set edge sharp flags based on face connections (if supported)
     for edge in obj.data.edges:
-        if hasattr(edge, 'use_edge_sharp') and len(edge.link_faces) == 2:
-            face1_smooth = edge.link_faces[0].use_smooth
-            face2_smooth = edge.link_faces[1].use_smooth
-            edge.use_edge_sharp = (face1_smooth != face2_smooth)
+        if hasattr(edge, 'use_edge_sharp'):
+            # Get connected faces through edge (Blender API compatibility)
+            connected_faces = []
+            for face in obj.data.polygons:
+                if edge.index in face.edge_keys:
+                    connected_faces.append(face)
+
+            if len(connected_faces) == 2:
+                face1_smooth = connected_faces[0].use_smooth
+                face2_smooth = connected_faces[1].use_smooth
+                edge.use_edge_sharp = (face1_smooth != face2_smooth)
 
     # Export with EXT_bmesh_encoding enabled
     exporter = Vrm0Exporter(

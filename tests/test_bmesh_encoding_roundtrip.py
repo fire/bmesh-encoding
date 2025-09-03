@@ -18,9 +18,9 @@ src_dir = test_dir.parent / "src"
 sys.path.insert(0, str(src_dir))
 
 from .base_blender_test_case import BaseBlenderTestCase
-from io_scene_vrm.editor.bmesh_encoding.encoding import BmeshEncoder
-from io_scene_vrm.editor.bmesh_encoding.decoding import BmeshDecoder
-from io_scene_vrm.common.logger import get_logger
+from ..encoding import BmeshEncoder
+from ..decoding import BmeshDecoder
+from ..logger import get_logger
 
 
 @pytest.fixture
@@ -29,7 +29,7 @@ def roundtrip_setup():
     bmesh_encoder = BmeshEncoder()
     bmesh_decoder = BmeshDecoder()
 
-    yield bmesh_encoder, bmesh_decoder
+    return bmesh_encoder, bmesh_decoder
 
 
 def create_test_mesh_object(name="TestMesh", topology_type="ico_sphere"):
@@ -154,9 +154,10 @@ def create_complex_topology_mesh(name="ComplexTopologyMesh"):
     bm.to_mesh(mesh)
     bm.free()
 
-    # Add crease data to mesh edges
+    # Add crease data to mesh edges (if supported)
     for edge in mesh.edges:
-        edge.crease = 0.5
+        if hasattr(edge, 'crease'):
+            edge.crease = 0.5
         # Transfer sharp marking from BMesh calculation
         # Note: We can't directly map BMesh edges to Mesh edges easily,
         # so we'll apply sharp marking based on angle threshold
@@ -280,9 +281,18 @@ def test_roundtrip_simple_cube(roundtrip_setup):
     compare_mesh_geometry(original_mesh, decoded_mesh)
 
     # Cleanup
-    bpy.data.objects.remove(obj)
-    bpy.data.meshes.remove(obj.data)
-    bpy.data.meshes.remove(original_mesh)
+    try:
+        bpy.data.objects.remove(obj)
+    except ReferenceError:
+        pass  # Object already removed
+    try:
+        bpy.data.meshes.remove(obj.data)
+    except ReferenceError:
+        pass  # Mesh already removed
+    try:
+        bpy.data.meshes.remove(original_mesh)
+    except ReferenceError:
+        pass  # Mesh already removed
 
 
 def test_roundtrip_complex_topology(roundtrip_setup):
@@ -308,9 +318,18 @@ def test_roundtrip_complex_topology(roundtrip_setup):
     # but that's expected as it's not part of the EXT_bmesh_encoding spec for VRM 0.x
 
     # Cleanup
-    bpy.data.objects.remove(obj)
-    bpy.data.meshes.remove(obj.data)
-    bpy.data.meshes.remove(original_mesh)
+    try:
+        bpy.data.objects.remove(obj)
+    except ReferenceError:
+        pass  # Object already removed
+    try:
+        bpy.data.meshes.remove(obj.data)
+    except ReferenceError:
+        pass  # Mesh already removed
+    try:
+        bpy.data.meshes.remove(original_mesh)
+    except ReferenceError:
+        pass  # Mesh already removed
 
 
 def test_roundtrip_non_manifold_mesh(roundtrip_setup):
@@ -333,9 +352,18 @@ def test_roundtrip_non_manifold_mesh(roundtrip_setup):
     assert compare_mesh_geometry(original_mesh, decoded_mesh)
 
     # Cleanup
-    bpy.data.objects.remove(obj)
-    bpy.data.meshes.remove(obj.data)
-    bpy.data.meshes.remove(original_mesh)
+    try:
+        bpy.data.objects.remove(obj)
+    except ReferenceError:
+        pass  # Object already removed
+    try:
+        bpy.data.meshes.remove(obj.data)
+    except ReferenceError:
+        pass  # Mesh already removed
+    try:
+        bpy.data.meshes.remove(original_mesh)
+    except ReferenceError:
+        pass  # Mesh already removed
 
 
 def test_roundtrip_with_shape_keys(roundtrip_setup):
@@ -362,9 +390,18 @@ def test_roundtrip_with_shape_keys(roundtrip_setup):
     # They are handled separately in the glTF export pipeline
 
     # Cleanup
-    bpy.data.objects.remove(obj)
-    bpy.data.meshes.remove(obj.data)
-    bpy.data.meshes.remove(original_mesh)
+    try:
+        bpy.data.objects.remove(obj)
+    except ReferenceError:
+        pass  # Object already removed
+    try:
+        bpy.data.meshes.remove(obj.data)
+    except ReferenceError:
+        pass  # Mesh already removed
+    try:
+        bpy.data.meshes.remove(original_mesh)
+    except ReferenceError:
+        pass  # Mesh already removed
 
 def test_roundtrip_empty_mesh(roundtrip_setup):
     """Test round-trip of essentially empty mesh."""
@@ -389,9 +426,18 @@ def test_roundtrip_empty_mesh(roundtrip_setup):
             assert compare_mesh_geometry(original_mesh, decoded_mesh)
 
     # Cleanup
-    bpy.data.objects.remove(obj)
-    bpy.data.meshes.remove(obj.data)
-    bpy.data.meshes.remove(original_mesh)
+    try:
+        bpy.data.objects.remove(obj)
+    except ReferenceError:
+        pass  # Object already removed
+    try:
+        bpy.data.meshes.remove(obj.data)
+    except ReferenceError:
+        pass  # Mesh already removed
+    try:
+        bpy.data.meshes.remove(original_mesh)
+    except ReferenceError:
+        pass  # Mesh already removed
 
 
 def test_multiple_roundtrip_cycles(roundtrip_setup):
@@ -431,12 +477,24 @@ def test_multiple_roundtrip_cycles(roundtrip_setup):
         current_obj = new_obj
 
         # Cleanup intermediate objects
-        bpy.data.objects.remove(current_obj)
-        bpy.data.meshes.remove(cycle_mesh)
+        try:
+            bpy.data.objects.remove(current_obj)
+        except ReferenceError:
+            pass  # Object already removed
+        try:
+            bpy.data.meshes.remove(cycle_mesh)
+        except ReferenceError:
+            pass  # Mesh already removed
 
     # Cleanup final objects
-    bpy.data.objects.remove(current_obj)
-    bpy.data.meshes.remove(current_mesh)
+    try:
+        bpy.data.objects.remove(current_obj)
+    except ReferenceError:
+        pass  # Object already removed
+    try:
+        bpy.data.meshes.remove(current_mesh)
+    except ReferenceError:
+        pass  # Mesh already removed
 
 def test_roundtrip_vrm0_export_pipeline(roundtrip_setup):
     """Test full VRM 0.x export pipeline with EXT_bmesh_encoding preserves fidelity."""
@@ -523,9 +581,18 @@ def test_large_mesh_roundtrip(roundtrip_setup):
             assert len(original_mesh.polygons) == len(decoded_mesh.polygons)
 
     # Cleanup
-    bpy.data.objects.remove(obj)
-    bpy.data.meshes.remove(obj.data)
-    bpy.data.meshes.remove(original_mesh)
+    try:
+        bpy.data.objects.remove(obj)
+    except ReferenceError:
+        pass  # Object already removed
+    try:
+        bpy.data.meshes.remove(obj.data)
+    except ReferenceError:
+        pass  # Mesh already removed
+    try:
+        bpy.data.meshes.remove(original_mesh)
+    except ReferenceError:
+        pass  # Mesh already removed
 
 
 def test_roundtrip_with_custom_materials(roundtrip_setup):
@@ -558,9 +625,18 @@ def test_roundtrip_with_custom_materials(roundtrip_setup):
     assert len(original_mesh.polygons) == len(decoded_mesh.polygons)
 
     # Cleanup
-    bpy.data.objects.remove(obj)
-    bpy.data.meshes.remove(obj.data)
-    bpy.data.meshes.remove(original_mesh)
+    try:
+        bpy.data.objects.remove(obj)
+    except ReferenceError:
+        pass  # Object already removed
+    try:
+        bpy.data.meshes.remove(obj.data)
+    except ReferenceError:
+        pass  # Mesh already removed
+    try:
+        bpy.data.meshes.remove(original_mesh)
+    except ReferenceError:
+        pass  # Mesh already removed
     bpy.data.materials.remove(mat1)
     bpy.data.materials.remove(mat2)
 
@@ -667,9 +743,18 @@ def test_smooth_shading_mixed_faces(roundtrip_setup):
     assert compare_mesh_geometry(original_mesh, decoded_mesh)
 
     # Cleanup
-    bpy.data.objects.remove(obj)
-    bpy.data.meshes.remove(obj.data)
-    bpy.data.meshes.remove(original_mesh)
+    try:
+        bpy.data.objects.remove(obj)
+    except ReferenceError:
+        pass  # Object already removed
+    try:
+        bpy.data.meshes.remove(obj.data)
+    except ReferenceError:
+        pass  # Mesh already removed
+    try:
+        bpy.data.meshes.remove(original_mesh)
+    except ReferenceError:
+        pass  # Mesh already removed
 
 
 def test_smooth_shading_edge_flags(roundtrip_setup):
@@ -701,9 +786,18 @@ def test_smooth_shading_edge_flags(roundtrip_setup):
     assert compare_mesh_geometry(original_mesh, decoded_mesh)
 
     # Cleanup
-    bpy.data.objects.remove(obj)
-    bpy.data.meshes.remove(obj.data)
-    bpy.data.meshes.remove(original_mesh)
+    try:
+        bpy.data.objects.remove(obj)
+    except ReferenceError:
+        pass  # Object already removed
+    try:
+        bpy.data.meshes.remove(obj.data)
+    except ReferenceError:
+        pass  # Mesh already removed
+    try:
+        bpy.data.meshes.remove(original_mesh)
+    except ReferenceError:
+        pass  # Mesh already removed
 
 
 def test_smooth_shading_pure_smooth(roundtrip_setup):
@@ -738,9 +832,18 @@ def test_smooth_shading_pure_smooth(roundtrip_setup):
     assert verify_smooth_flag_preservation(original_mesh, decoded_mesh)
 
     # Cleanup
-    bpy.data.objects.remove(obj)
-    bpy.data.meshes.remove(obj.data)
-    bpy.data.meshes.remove(original_mesh)
+    try:
+        bpy.data.objects.remove(obj)
+    except ReferenceError:
+        pass  # Object already removed
+    try:
+        bpy.data.meshes.remove(obj.data)
+    except ReferenceError:
+        pass  # Mesh already removed
+    try:
+        bpy.data.meshes.remove(original_mesh)
+    except ReferenceError:
+        pass  # Mesh already removed
 
 
 def test_smooth_shading_pure_faceted(roundtrip_setup):
@@ -775,9 +878,18 @@ def test_smooth_shading_pure_faceted(roundtrip_setup):
     assert verify_smooth_flag_preservation(original_mesh, decoded_mesh)
 
     # Cleanup
-    bpy.data.objects.remove(obj)
-    bpy.data.meshes.remove(obj.data)
-    bpy.data.meshes.remove(original_mesh)
+    try:
+        bpy.data.objects.remove(obj)
+    except ReferenceError:
+        pass  # Object already removed
+    try:
+        bpy.data.meshes.remove(obj.data)
+    except ReferenceError:
+        pass  # Mesh already removed
+    try:
+        bpy.data.meshes.remove(original_mesh)
+    except ReferenceError:
+        pass  # Mesh already removed
 
 
 def test_smooth_shading_complex_topology(roundtrip_setup):
@@ -820,9 +932,18 @@ def test_smooth_shading_complex_topology(roundtrip_setup):
     assert compare_mesh_geometry(original_mesh, decoded_mesh)
 
     # Cleanup
-    bpy.data.objects.remove(obj)
-    bpy.data.meshes.remove(obj.data)
-    bpy.data.meshes.remove(original_mesh)
+    try:
+        bpy.data.objects.remove(obj)
+    except ReferenceError:
+        pass  # Object already removed
+    try:
+        bpy.data.meshes.remove(obj.data)
+    except ReferenceError:
+        pass  # Mesh already removed
+    try:
+        bpy.data.meshes.remove(original_mesh)
+    except ReferenceError:
+        pass  # Mesh already removed
 
 if __name__ == "__main__":
     unittest.main()

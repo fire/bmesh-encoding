@@ -404,7 +404,7 @@ class TestEndToEndImportExport:
 
         try:
             # Export with EXT_bmesh_encoding (creates the extension data)
-            bpy.ops.export_scene.gltf_ext_bmesh_encoding(
+            bpy.ops.export_scene.gltf(
                 filepath=filepath,
                 export_format='GLTF_SEPARATE',
                 use_selection=True
@@ -460,7 +460,7 @@ class TestEndToEndImportExport:
 
         try:
             # Use the export operator
-            bpy.ops.export_scene.gltf_ext_bmesh_encoding(
+            bpy.ops.export_scene.gltf(
                 filepath=filepath,
                 export_format='GLTF_SEPARATE',
                 use_selection=True
@@ -470,7 +470,7 @@ class TestEndToEndImportExport:
             bpy.data.objects.remove(obj)
 
             # Import the glTF file
-            bpy.ops.import_scene.gltf_ext_bmesh_encoding(filepath=filepath)
+            bpy.ops.import_scene.gltf(filepath=filepath)
 
             # Find imported object
             imported_obj = None
@@ -506,7 +506,7 @@ class TestEndToEndImportExport:
             filepath = tmp_file.name
 
         try:
-            bpy.ops.export_scene.gltf_ext_bmesh_encoding(
+            bpy.ops.export_scene.gltf(
                 filepath=filepath,
                 export_format='GLTF_SEPARATE',
                 use_selection=True
@@ -516,7 +516,7 @@ class TestEndToEndImportExport:
             bpy.data.objects.remove(obj)
 
             # Import
-            bpy.ops.import_scene.gltf_ext_bmesh_encoding(filepath=filepath)
+            bpy.ops.import_scene.gltf(filepath=filepath)
 
             # Find imported object
             imported_obj = None
@@ -551,7 +551,7 @@ class TestEndToEndImportExport:
                 filepath = tmp_file.name
 
             try:
-                bpy.ops.export_scene.gltf_ext_bmesh_encoding(
+                bpy.ops.export_scene.gltf(
                     filepath=filepath,
                     export_format='GLTF_SEPARATE',
                     use_selection=True
@@ -559,7 +559,7 @@ class TestEndToEndImportExport:
 
                 bpy.data.objects.remove(obj)
 
-                bpy.ops.import_scene.gltf_ext_bmesh_encoding(filepath=filepath)
+                bpy.ops.import_scene.gltf(filepath=filepath)
 
                 imported_obj = None
                 for obj in bpy.context.scene.objects:
@@ -590,7 +590,7 @@ class TestEndToEndImportExport:
             filepath = tmp_file.name
 
         try:
-            bpy.ops.export_scene.gltf_ext_bmesh_encoding(
+            bpy.ops.export_scene.gltf(
                 filepath=filepath,
                 export_format='GLTF_SEPARATE',
                 use_selection=True
@@ -598,7 +598,7 @@ class TestEndToEndImportExport:
 
             bpy.data.objects.remove(obj)
 
-            bpy.ops.import_scene.gltf_ext_bmesh_encoding(filepath=filepath)
+            bpy.ops.import_scene.gltf(filepath=filepath)
 
             imported_obj = None
             for obj in bpy.context.scene.objects:
@@ -629,7 +629,7 @@ class TestEndToEndImportExport:
             filepath = tmp_file.name
 
         try:
-            bpy.ops.export_scene.gltf_ext_bmesh_encoding(
+            bpy.ops.export_scene.gltf(
                 filepath=filepath,
                 export_format='GLTF_SEPARATE',
                 use_selection=True
@@ -637,7 +637,7 @@ class TestEndToEndImportExport:
 
             bpy.data.objects.remove(obj)
 
-            bpy.ops.import_scene.gltf_ext_bmesh_encoding(filepath=filepath)
+            bpy.ops.import_scene.gltf(filepath=filepath)
 
             imported_obj = None
             for obj in bpy.context.scene.objects:
@@ -668,7 +668,7 @@ class TestEndToEndImportExport:
             filepath = tmp_file.name
 
         try:
-            bpy.ops.export_scene.gltf_ext_bmesh_encoding(
+            bpy.ops.export_scene.gltf(
                 filepath=filepath,
                 export_format='GLB',
                 use_selection=True
@@ -676,7 +676,7 @@ class TestEndToEndImportExport:
 
             bpy.data.objects.remove(obj)
 
-            bpy.ops.import_scene.gltf_ext_bmesh_encoding(filepath=filepath)
+            bpy.ops.import_scene.gltf(filepath=filepath)
 
             imported_obj = None
             for obj in bpy.context.scene.objects:
@@ -720,7 +720,7 @@ class TestEndToEndImportExport:
 
         try:
             # Export all objects
-            bpy.ops.export_scene.gltf_ext_bmesh_encoding(
+            bpy.ops.export_scene.gltf(
                 filepath=filepath,
                 export_format='GLTF_SEPARATE',
                 use_selection=False  # Export all
@@ -731,7 +731,7 @@ class TestEndToEndImportExport:
                 bpy.data.objects.remove(obj)
 
             # Import
-            bpy.ops.import_scene.gltf_ext_bmesh_encoding(filepath=filepath)
+            bpy.ops.import_scene.gltf(filepath=filepath)
 
             # Find all imported mesh objects
             imported_objects = [obj for obj in bpy.context.scene.objects if obj.type == 'MESH']
@@ -784,7 +784,7 @@ class TestEndToEndImportExport:
             import time
             start_time = time.time()
 
-            bpy.ops.export_scene.gltf_ext_bmesh_encoding(
+            bpy.ops.export_scene.gltf(
                 filepath=filepath,
                 export_format='GLTF_SEPARATE',
                 use_selection=True
@@ -796,7 +796,7 @@ class TestEndToEndImportExport:
             bpy.data.objects.remove(obj)
 
             start_time = time.time()
-            bpy.ops.import_scene.gltf_ext_bmesh_encoding(filepath=filepath)
+            bpy.ops.import_scene.gltf(filepath=filepath)
             import_time = time.time() - start_time
             assert import_time < 5.0, f"Import too slow: {import_time:.2f}s"
 

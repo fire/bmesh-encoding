@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT OR GPL-3.0-or-later
+# SPDX-License-Identifier: MIT
 """Standalone glTF exporter with EXT_bmesh_encoding support."""
 
 import bpy
@@ -192,7 +192,7 @@ class EXTBMeshEncodingExporter:
                 mesh = blender_object.data
 
                 # Encode BMesh topology to extension data
-                extension_data = self.encoder.encode_bmesh_to_gltf_extension(mesh, export_settings)
+                extension_data = self.encoder.encode_object(blender_object)
 
                 if extension_data:
                     # Add extension to glTF object

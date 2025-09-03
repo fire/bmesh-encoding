@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT OR GPL-3.0-or-later
+# SPDX-License-Identifier: MIT
 """EXT_bmesh_encoding buffer-based encoding implementation."""
 
 import struct
@@ -78,17 +78,17 @@ class BmeshEncoder:
         """
         logger.info(f"Creating native mesh data for '{mesh_obj.name}' for EXT_bmesh_encoding.")
 
-        # Use the static method to get evaluated mesh data
-        mesh_data = BmeshEncoder.create_mesh_data_from_object(mesh_obj)
-
-        if not mesh_data:
-            logger.warning(f"Could not get mesh data from '{mesh_obj.name}', skipping extension.")
+        # Use the mesh data directly from the object to avoid evaluation issues
+        if not mesh_obj.data or mesh_obj.type != 'MESH':
+            logger.warning(f"Invalid mesh object '{mesh_obj.name}', skipping extension.")
             return {}
+
+        # Use the mesh data directly - this avoids the evaluation context issues
+        mesh_data = mesh_obj.data
 
         # Delegate to the native encoding logic
         extension_data = self.encode_mesh_to_gltf_extension_native(mesh_data)
 
-        # No need to free mesh_data like a BMesh, Blender manages it
         return extension_data
 
     def encode_bmesh_to_gltf_extension(self, bm: BMesh) -> Dict[str, Any]:

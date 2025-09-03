@@ -113,7 +113,8 @@ def test_extension_instantiation():
         # Test the hook signatures by calling them
         try:
             # Test import hooks with correct signatures
-            import_extension.gather_import_mesh_before_hook(create_mock_blender_objects()['gltf_mesh'], Mock())
+            mocks = create_mock_blender_objects()
+            import_extension.gather_import_mesh_before_hook(mocks['gltf_mesh'], mocks['gltf_importer'])
             import_extension.gather_import_armature_bone_after_hook(None, None, None, Mock())
 
             # Test export hook
@@ -158,11 +159,75 @@ def create_mock_blender_objects():
     # Mock primitive with extension
     mock_primitive = Mock()
     mock_primitive.extensions = Mock()
+
+    # Create proper binary data for vertices (4 vertices with positions)
+    import struct
+    vertex_positions = struct.pack('<12f',  # 4 vertices * 3 floats each
+        0.0, 0.0, 0.0,  # vertex 0
+        1.0, 0.0, 0.0,  # vertex 1
+        1.0, 1.0, 0.0,  # vertex 2
+        0.0, 1.0, 0.0   # vertex 3
+    )
+
+    # Create proper binary data for edges (4 edges with vertex pairs)
+    edge_vertices = struct.pack('<8I',  # 4 edges * 2 vertices each
+        0, 1,  # edge 0
+        1, 2,  # edge 1
+        2, 3,  # edge 2
+        3, 0   # edge 3
+    )
+
+    # Create proper binary data for face vertices and offsets
+    face_vertices = struct.pack('<4I', 0, 1, 2, 3)  # single face with 4 vertices
+    face_offsets = struct.pack('<2I', 0, 4)  # offset 0, and final offset 4
+
     mock_primitive.extensions.EXT_bmesh_encoding = {
-        "vertices": {"count": 4},
-        "edges": {"count": 4, "indices": [0, 1, 1, 2, 2, 3, 3, 0]},
-        "loops": {"count": 4, "vertex_indices": [0, 1, 2, 3]},
-        "faces": {"count": 1, "loop_start": [0], "loop_total": [4]}
+        "vertices": {
+            "count": 4,
+            "positions": {
+                "data": vertex_positions,
+                "target": 34962,
+                "componentType": 5126,
+                "type": "VEC3",
+                "count": 4
+            }
+        },
+        "edges": {
+            "count": 4,
+            "vertices": {
+                "data": edge_vertices,
+                "target": 34963,
+                "componentType": 5125,
+                "type": "VEC2",
+                "count": 4
+            }
+        },
+        "loops": {
+            "count": 4,
+            "topology": {
+                "data": struct.pack('<16I', 0, 0, 0, 1, 2, 3, 0, 0, 1, 1, 0, 2, 3, 1, 0, 0),  # mock topology data
+                "target": 34962,
+                "componentType": 5125,
+                "type": "SCALAR",
+                "count": 16
+            }
+        },
+        "faces": {
+            "count": 1,
+            "vertices": {
+                "data": face_vertices,
+                "target": 34962,
+                "componentType": 5125,
+                "type": "SCALAR"
+            },
+            "offsets": {
+                "data": face_offsets,
+                "target": 34962,
+                "componentType": 5125,
+                "type": "SCALAR",
+                "count": 2
+            }
+        }
     }
     mock_gltf_mesh.primitives.append(mock_primitive)
 

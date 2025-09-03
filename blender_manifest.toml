@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT OR GPL-3.0-or-later
+# SPDX-License-Identifier: MIT
 schema_version = "1.0.0"
 
 id = "ext_bmesh_encoding"
@@ -32,8 +32,7 @@ permissions = []
 tags = ["Import-Export", "Mesh", "glTF"]
 
 license = [
-    "SPDX:MIT",
-    "SPDX:GPL-3.0-or-later"
+    "SPDX:MIT"
 ]
 
 copyright = [

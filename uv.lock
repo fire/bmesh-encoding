@@ -4,7 +4,7 @@ requires-python = "==3.11.*"
 
 [[package]]
 name = "bpy"
-version = "4.5.2"
+version = "4.5.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cython" },
@@ -13,11 +13,11 @@ dependencies = [
     { name = "zstandard" },
 ]
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/88/4f/3bfcb8bf72754ca8d7f7c64e40429c2561a3e8fd24b41cdf49cc993f53b9/bpy-4.5.2-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:5bd8708d5d62a1cbde30ffc4395dde09febcf034a880cbb06f0ae1c95d99054c", size = 220890271, upload-time = "2025-08-22T09:28:59.233Z" },
-    { url = "https://files.pythonhosted.org/packages/6e/15/ff6aecb4dda90328aee3327e49bd2d57c9b1b3eb8ca9b86ca9a666b64146/bpy-4.5.2-cp311-cp311-macosx_11_0_x86_64.whl", hash = "sha256:56515bcfeedf0a0ec9813179ef11bc54701c7389108f9a0a077226b35de5482a", size = 235127666, upload-time = "2025-08-22T09:27:19.44Z" },
-    { url = "https://files.pythonhosted.org/packages/ee/f7/e34428697b79458c0a57c55e8c8f7e868bf922a8ad1de46be767a00ad69b/bpy-4.5.2-cp311-cp311-manylinux_2_28_x86_64.whl", hash = "sha256:536a722cbb4ae6db5770edf8e8a8ccaff2f09c2a7eaf52ecba730e523b6e6bd7", size = 373008129, upload-time = "2025-08-22T09:28:35.441Z" },
-    { url = "https://files.pythonhosted.org/packages/b6/bd/9d8528a1abb0a46baefe81eb3ab4ebb39aca3d5813acbb7c99d401d586c8/bpy-4.5.2-cp311-cp311-win_amd64.whl", hash = "sha256:e22275e42ddc227dd845406bd6605c29ab7ae18b266f068f9aa29e347e9f4671", size = 326586790, upload-time = "2025-08-22T09:27:51.214Z" },
-    { url = "https://files.pythonhosted.org/packages/9e/98/f81dbde272f5a105921feba505cb188ac51ed63bd440e51726b01d444b4f/bpy-4.5.2-cp311-cp311-win_arm64.whl", hash = "sha256:c4e90e1387f5fc2e9e470b2f90cc0f868c23c00cba1a063ac661c41d6a22083b", size = 194073807, upload-time = "2025-08-22T09:26:54.765Z" },
+    { url = "https://files.pythonhosted.org/packages/7d/c4/496423f41dc8704338215eb01f58fbbcc3a145c6285e50a27917d742b4dc/bpy-4.5.1-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:6bdadef67ad78ee448433c556ef6b21172ea7e1e50078f07a170d3d2c4b2ceb1", size = 220883524, upload-time = "2025-07-30T09:33:16.153Z" },
+    { url = "https://files.pythonhosted.org/packages/eb/12/fe48019ac86a5a092588fbde6f04b5f7438f68522ff48707bb8e92cceaad/bpy-4.5.1-cp311-cp311-macosx_11_0_x86_64.whl", hash = "sha256:0905fabec6ac9d6775ff88062bee2424344ab75b311be5ed566834c0c7f8415a", size = 235110203, upload-time = "2025-07-30T09:31:54.565Z" },
+    { url = "https://files.pythonhosted.org/packages/b9/8b/188272feeb17091b3200b2cddb0836b503b12ad19cfc054425ffba2ad9e3/bpy-4.5.1-cp311-cp311-manylinux_2_28_x86_64.whl", hash = "sha256:f8cd41c8f8f13e4aa77a7eb0ba4d95d2b8bcc3241ae72acdff3bc6d2558b9e3c", size = 372993828, upload-time = "2025-07-30T09:32:57.019Z" },
+    { url = "https://files.pythonhosted.org/packages/6c/44/eac5307cf09acf09434b39f3cbe761a2a5df36cca5cb7fc3f92fb815feb3/bpy-4.5.1-cp311-cp311-win_amd64.whl", hash = "sha256:57f17580b94192b6e0f1ada929b84a40a59cf2c13a298da5c238ca3e18e39d1b", size = 326556270, upload-time = "2025-07-30T09:32:19.395Z" },
+    { url = "https://files.pythonhosted.org/packages/0e/da/5a6eeffd172b860a308bfe6bd381c1e8f753a271b423bae14bcb8c8821a9/bpy-4.5.1-cp311-cp311-win_arm64.whl", hash = "sha256:78890fd4d428572bd0395377ceb8b95c24075fcc67678103f661c19fcac5342c", size = 194062111, upload-time = "2025-07-30T09:33:41.495Z" },
 ]
 
 [[package]]
@@ -100,11 +100,10 @@ dev = [
     { name = "mypy" },
     { name = "pytest" },
     { name = "ruff" },
-    { name = "starry-bpy-typings" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "bpy", specifier = "==4.5.*" }]
+requires-dist = [{ name = "bpy", specifier = "==4.5.1" }]
 
 [package.metadata.requires-dev]
 dev = [
@@ -112,7 +111,6 @@ dev = [
     { name = "mypy", specifier = "==1.15.0" },
     { name = "pytest" },
     { name = "ruff", specifier = "==0.9.6" },
-    { name = "starry-bpy-typings", directory = "../VRM-Addon-for-Blender/typings" },
 ]
 
 [[package]]
@@ -259,11 +257,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/ee/30/c3cee10f915ed75a5c29c1e57311282d1a15855551a64795c1b2bbe5cf37/ruff-0.9.6-py3-none-win_amd64.whl", hash = "sha256:03482d5c09d90d4ee3f40d97578423698ad895c87314c4de39ed2af945633caa", size = 10999914, upload-time = "2025-02-10T12:59:40.026Z" },
     { url = "https://files.pythonhosted.org/packages/e8/a8/d71f44b93e3aa86ae232af1f2126ca7b95c0f515ec135462b3e1f351441c/ruff-0.9.6-py3-none-win_arm64.whl", hash = "sha256:0e2bb706a2be7ddfea4a4af918562fdc1bcb16df255e5fa595bbd800ce322a5a", size = 10177499, upload-time = "2025-02-10T12:59:42.989Z" },
 ]
-
-[[package]]
-name = "starry-bpy-typings"
-version = "1.0.0"
-source = { directory = "../VRM-Addon-for-Blender/typings" }
 
 [[package]]
 name = "typing-extensions"
