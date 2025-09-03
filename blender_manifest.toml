@@ -26,6 +26,7 @@ Features:
 - Maintain ngon topology
 - Support for complex mesh structures
 - Compatible with VRM 0.x and 1.x formats
+- Automatic integration with glTF-Blender-IO
 """
 
 # Tags
@@ -40,7 +41,8 @@ website = "https://github.com/fire/bmesh-encoding"
 # Permissions (none required)
 # permissions = []
 
-# Addon files
+# Addon files - specify the main module
 wheels = []
+modules = ["."]
 
 # No external Python modules required beyond Blender's standard library

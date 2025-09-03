@@ -1,173 +1,161 @@
-# EXT_bmesh_encoding - Standalone Blender Addon
+# EXT_bmesh_encoding Blender Addon
 
-A standalone Blender addon that provides glTF export with EXT_bmesh_encoding extension support for preserving BMesh topology information.
-
-## Overview
-
-This addon extracts the EXT_bmesh_encoding functionality from the VRM-Addon-for-Blender and makes it available as an independent addon. The EXT_bmesh_encoding extension preserves BMesh topology data during glTF export, allowing for accurate reconstruction of mesh connectivity and edge flow in supporting applications.
+Preserves mesh topology during glTF export/import operations by implementing the EXT_bmesh_encoding glTF extension.
 
 ## Features
 
-- **BMesh Topology Preservation**: Maintains vertex adjacency, edge connectivity, and face relationships
-- **UV Coordinate Support**: Preserves UV mapping information for texture coordinates
-- **Manifold Information**: Optionally includes manifold status for edges
-- **Buffer-Based Storage**: Efficient binary storage in glTF buffers
-- **glTF 2.0 Compatible**: Fully compliant with glTF 2.0 specification
-- **Standalone Operation**: Works independently of VRM addon
+- ✅ Preserve quad faces during glTF roundtrip
+- ✅ Maintain ngon topology
+- ✅ Support for complex mesh structures
+- ✅ Compatible with VRM 0.x and 1.x formats
+- ✅ Automatic integration with glTF-Blender-IO
 
 ## Installation
 
-1. Download or clone the VRM-Addon-for-Blender repository
-2. Copy the `src/ext_bmesh_encoding/` directory to your Blender addons folder
-3. Enable the addon in Blender's preferences
+### Method 1: Install as Blender Addon (Recommended)
+
+1. **Download the addon files:**
+
+   ```bash
+   git clone https://github.com/fire/bmesh-encoding.git
+   cd bmesh-encoding
+   ```
+
+2. **Install in Blender:**
+
+   - Open Blender 4.0 or later
+   - Go to `Edit > Preferences > Add-ons`
+   - Click `Install...`
+   - Navigate to the cloned repository folder
+   - Select the `blender_manifest.toml` file
+   - Click `Install Add-on`
+
+3. **Enable the addon:**
+   - In the Add-ons preferences, search for "EXT_bmesh_encoding"
+   - Check the checkbox to enable the addon
+   - The addon should now be active
+
+### Method 2: Manual Installation
+
+1. **Copy files to Blender addons directory:**
+
+   ```bash
+   # On Linux/Mac
+   cp -r /path/to/ext_bmesh_encoding ~/.config/blender/4.0/scripts/addons/
+
+   # On Windows
+   copy "C:\path\to\ext_bmesh_encoding" "%APPDATA%\Blender Foundation\Blender\4.0\scripts\addons\"
+   ```
+
+2. **Enable in Blender:**
+   - Open Blender
+   - Go to `Edit > Preferences > Add-ons`
+   - Search for "EXT_bmesh_encoding"
+   - Enable the addon
 
 ## Usage
 
-### Basic Export
+### Exporting with EXT_bmesh_encoding
 
-1. Open Blender with your mesh scene
-2. Go to `File > Export > glTF 2.0 with EXT_bmesh_encoding`
-3. Choose your export options:
-   - **Format**: glTF Binary (.glb) recommended
-   - **Selected Objects**: Export selected objects only
-   - **Apply Transform**: Apply object transforms to mesh data
-   - **EXT_bmesh_encoding**: Enable the extension (enabled by default)
+1. Create or load a mesh with quads/ngons in Blender
+2. Go to `File > Export > glTF 2.0 (.gltf/.glb)`
+3. In the export settings, ensure EXT_bmesh_encoding is enabled (it should be automatic)
+4. Export your glTF file
+5. Check the Blender console for confirmation messages
 
-### Export Options
+### Importing glTF files with EXT_bmesh_encoding
 
-- **Format**: Choose between glTF Separate, Embedded, or Binary
-- **Selected Objects**: Export only selected objects
-- **Apply Transform**: Apply object transformations to mesh data
-- **Y Up**: Use +Y up coordinate system
-- **EXT_bmesh_encoding**: Include BMesh topology extension
+1. Go to `File > Import > glTF 2.0 (.gltf/.glb)`
+2. Select your glTF file that contains EXT_bmesh_encoding data
+3. The addon will automatically detect and preserve the original mesh topology
+4. Check the Blender console for processing messages
 
-## Technical Details
+## Testing the Installation
 
-### Extension Structure
+You can test if the addon is working correctly by running the included diagnostic script:
 
-The EXT_bmesh_encoding extension adds the following data to glTF meshes:
+1. Open Blender's Python console (`Scripting` workspace > Python Console)
+2. Run the diagnostic script:
+   ```python
+   import sys
+   sys.path.append('/path/to/ext_bmesh_encoding')
+   import test_blender_integration
+   test_blender_integration.main()
+   ```
 
-```json
-{
-  "meshes": [
-    {
-      "primitives": [
-        {
-          "extensions": {
-            "EXT_bmesh_encoding": {
-              "vertices": {
-                "count": 8,
-                "positions": {"data": "...", "target": 34962, "componentType": 5126, "type": "VEC3", "count": 8},
-                "attributes": {
-                  "NORMAL": {"data": "...", "target": 34962, "componentType": 5126, "type": "VEC3", "count": 8}
-                }
-              },
-              "edges": {
-                "count": 12,
-                "vertices": {"data": "...", "target": 34963, "componentType": 5125, "type": "VEC2", "count": 12},
-                "attributes": {
-                  "_SMOOTH": {"data": "...", "target": 34962, "componentType": 5121, "type": "SCALAR", "count": 12}
-                }
-              },
-              "loops": {
-                "count": 24,
-                "topology": {"data": "...", "target": 34962, "componentType": 5125, "type": "SCALAR", "count": 168},
-                "attributes": {
-                  "TEXCOORD_0": {"data": "...", "target": 34962, "componentType": 5126, "type": "VEC2", "count": 24}
-                }
-              },
-              "faces": {
-                "count": 6,
-                "vertices": {"data": "...", "target": 34962, "componentType": 5125, "type": "SCALAR"},
-                "offsets": {"data": "...", "target": 34962, "componentType": 5125, "type": "SCALAR", "count": 7},
-                "normals": {"data": "...", "target": 34962, "componentType": 5126, "type": "VEC3", "count": 6},
-                "smooth": {"data": "...", "target": 34962, "componentType": 5121, "type": "SCALAR", "count": 6}
-              }
-            }
-          }
-        }
-      ]
-    }
-  ]
-}
-```
+## Troubleshooting
 
-### Data Components
+### Common Issues
 
-- **Vertices**: Position and normal data with adjacency information
-- **Edges**: Vertex pairs, face adjacency, and smooth flags
-- **Loops**: Topology navigation (vertex, edge, face, next, prev, radial)
-- **Faces**: Variable-length vertex lists with offsets and face normals
+**Addon not appearing in preferences:**
 
-## API Reference
+- Ensure you're using Blender 4.0 or later
+- Check that all files were copied correctly
+- Try restarting Blender after installation
 
-### BmeshEncoder Class
+**Extension not working during export/import:**
 
-```python
-from ext_bmesh_encoding.encoding import BmeshEncoder
+- Check Blender console for error messages
+- Ensure the glTF-Blender-IO addon is enabled
+- Verify that your mesh contains quads/ngons
 
-encoder = BmeshEncoder()
+**Python errors:**
 
-# Encode using BMesh (recommended for complex topology)
-extension_data = encoder.encode_object(mesh_object)
+- Make sure Blender's Python can access the bmesh module
+- Check that all dependencies are available
 
-# Encode using native mesh API (more stable)
-extension_data = encoder.encode_object_native(mesh_object)
-```
+### Debug Mode
 
-### Export Operator
+To enable debug logging:
 
-```python
-# Programmatic export
-bpy.ops.export_scene.gltf_ext_bmesh_encoding(
-    filepath="/path/to/output.glb",
-    export_format='GLB',
-    use_selection=False,
-    export_apply=True,
-    export_y_up=True,
-    export_ext_bmesh_encoding=True
-)
-```
-
-## Compatibility
-
-- **Blender**: 3.6.0+
-- **glTF**: 2.0
-- **Python**: 3.10+
-- **Operating Systems**: Windows, macOS, Linux
+1. Open Blender's Python console
+2. Run:
+   ```python
+   import logging
+   logging.getLogger('ext_bmesh_encoding').setLevel(logging.DEBUG)
+   ```
 
 ## Development
 
 ### Project Structure
 
 ```
-src/ext_bmesh_encoding/
-├── __init__.py              # Main addon file
-├── blender_manifest.toml    # Blender 4.2+ manifest
-├── encoding.py              # Core encoding logic
-├── exporter.py              # Export operators and UI
+ext_bmesh_encoding/
+├── __init__.py              # Main addon file with bl_info
+├── blender_manifest.toml    # Blender 4.0+ addon manifest
+├── gltf_extension.py        # glTF extension hooks
+├── encoding.py              # BMesh encoding logic
+├── decoding.py              # BMesh decoding logic
+├── ui.py                    # User interface components
 ├── logger.py                # Logging utilities
-├── ui.py                    # UI panels and menus
-├── pyproject.toml           # Python project configuration
-├── README.md                # This file
+├── exporter.py              # Export utilities
+├── importer.py              # Import utilities
 └── tests/                   # Test suite
-    ├── __init__.py
-    └── test_encoding.py
 ```
 
 ### Running Tests
 
 ```bash
-cd src/ext_bmesh_encoding
-python -m pytest tests/
+# Install development dependencies
+pip install -e .[dev]
+
+# Run tests
+pytest tests/
+
+# Run specific test
+pytest tests/test_bmesh_encoding_roundtrip.py
 ```
 
-### Building
+## Compatibility
 
-```bash
-cd src/ext_bmesh_encoding
-uv build
-```
+- **Blender:** 4.0.0 and later
+- **Python:** 3.10+ (as required by Blender)
+- **glTF-Blender-IO:** Automatic integration
+- **VRM:** Compatible with VRM 0.x and 1.x
+
+## License
+
+MIT License - see LICENSE file for details.
 
 ## Contributing
 
@@ -175,14 +163,11 @@ uv build
 2. Create a feature branch
 3. Make your changes
 4. Add tests for new functionality
-5. Submit a pull request
+5. Ensure all tests pass
+6. Submit a pull request
 
-## License
+## Support
 
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Related Projects
-
-- [VRM-Addon-for-Blender](https://github.com/vrm-c/VRM-Addon-for-Blender) - Original VRM addon
-- [EXT_bmesh_encoding Specification](https://github.com/vrm-c/vrm-specification/tree/master/specification/0.0/schema/extensions/EXT_bmesh_encoding) - Extension specification
-- [glTF 2.0 Specification](https://www.khronos.org/gltf/) - glTF standard
+- **Issues:** [GitHub Issues](https://github.com/fire/bmesh-encoding/issues)
+- **Discussions:** [GitHub Discussions](https://github.com/fire/bmesh-encoding/discussions)
+- **Documentation:** See the `docs/` directory for detailed documentation

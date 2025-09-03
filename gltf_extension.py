@@ -2,6 +2,7 @@
 """glTF EXT_bmesh_encoding extension hooks for Blender's glTF exporter."""
 
 import bpy
+from bpy.props import BoolProperty
 from typing import Any, Dict, Optional
 
 from .logger import get_logger
@@ -44,6 +45,16 @@ class glTF2ImportUserExtension:
             self._ensure_initialized()
             if not self.decoder:
                 logger.warning("EXT_bmesh_encoding decoder not available")
+                return
+
+            # Check if EXT_bmesh_encoding is enabled via scene property
+            ext_enabled = True
+            if hasattr(bpy.context, 'scene') and hasattr(bpy.context.scene, 'enable_ext_bmesh_encoding'):
+                ext_enabled = bpy.context.scene.enable_ext_bmesh_encoding
+                logger.debug(f"EXT_bmesh_encoding enabled via scene property: {ext_enabled}")
+
+            if not ext_enabled:
+                logger.debug("EXT_bmesh_encoding disabled, skipping import processing")
                 return
 
             logger.info("🔍 EXT_bmesh_encoding import hook called - checking for extension data")
@@ -213,14 +224,22 @@ class glTF2ExportUserExtension:
                 logger.warning("EXT_bmesh_encoding encoder not available")
                 return
 
-            # Check if EXT_bmesh_encoding is enabled in export settings
-            # Default to enabled if the setting is not available (for standard glTF export)
+            # Check if EXT_bmesh_encoding is enabled
+            # First check scene property, then export settings, default to enabled
             ext_enabled = True
-            if export_settings and hasattr(export_settings, 'export_ext_bmesh_encoding'):
+
+            # Check scene property first (UI toggle)
+            if hasattr(bpy.context, 'scene') and hasattr(bpy.context.scene, 'enable_ext_bmesh_encoding'):
+                ext_enabled = bpy.context.scene.enable_ext_bmesh_encoding
+                logger.debug(f"EXT_bmesh_encoding enabled via scene property: {ext_enabled}")
+
+            # Also check export settings if available (for compatibility)
+            elif export_settings and hasattr(export_settings, 'export_ext_bmesh_encoding'):
                 ext_enabled = export_settings.export_ext_bmesh_encoding
+                logger.debug(f"EXT_bmesh_encoding enabled via export settings: {ext_enabled}")
 
             if not ext_enabled:
-                logger.debug("EXT_bmesh_encoding disabled in export settings")
+                logger.debug("EXT_bmesh_encoding disabled")
                 return
 
             # Process mesh objects
@@ -315,31 +334,26 @@ __all__ = [
     'ext_bmesh_encoding'
 ]
 
-# Register extension with Blender's glTF addon system
-# This ensures the extension is discoverable during import/export operations
-def register():
-    """Register the EXT_bmesh_encoding extension with Blender's glTF system."""
-    try:
-        # Try to import and register with the glTF addon
-        import bpy
-        if hasattr(bpy, 'ops') and hasattr(bpy.ops, 'import_scene') and hasattr(bpy.ops.import_scene, 'gltf'):
-            # The extension should be auto-discovered by glTF-Blender-IO
-            # through the module-level class attributes
-            logger.info("EXT_bmesh_encoding extension registered with glTF system")
-        else:
-            logger.warning("glTF addon not available for extension registration")
-    except Exception as e:
-        logger.error(f"Failed to register EXT_bmesh_encoding extension: {e}")
+# Property registration for UI controls
+def register_properties():
+    """Register Blender properties for the EXT_bmesh_encoding addon."""
+    # Register the enable/disable property for the extension
+    bpy.types.Scene.enable_ext_bmesh_encoding = BoolProperty(
+        name="EXT_bmesh_encoding",
+        description="Enable EXT_bmesh_encoding extension for BMesh topology preservation during glTF export/import",
+        default=True,
+    )
+    logger.debug("EXT_bmesh_encoding properties registered")
 
-def unregister():
-    """Unregister the EXT_bmesh_encoding extension."""
-    try:
-        logger.info("EXT_bmesh_encoding extension unregistered")
-    except Exception as e:
-        logger.error(f"Failed to unregister EXT_bmesh_encoding extension: {e}")
 
-# Auto-register on module import
-try:
-    register()
-except Exception as e:
-    logger.debug(f"Auto-registration failed (expected in test environment): {e}")
+def unregister_properties():
+    """Unregister Blender properties for the EXT_bmesh_encoding addon."""
+    # Remove the property from Scene
+    if hasattr(bpy.types.Scene, 'enable_ext_bmesh_encoding'):
+        del bpy.types.Scene.enable_ext_bmesh_encoding
+        logger.debug("EXT_bmesh_encoding properties unregistered")
+
+
+# Note: No manual registration needed. glTF-Blender-IO automatically discovers
+# extension classes through the module-level attributes defined above.
+# The extension will be available when the addon is enabled in Blender.
