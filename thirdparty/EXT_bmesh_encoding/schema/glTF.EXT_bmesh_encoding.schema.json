@@ -28,7 +28,6 @@
                 },
                 "attributes": {
                     "type": "object",
-                    "description": "Buffer views for vertex attributes",
                     "patternProperties": {
                         "^(POSITION|NORMAL|TANGENT|COLOR_[0-9]+|TEXCOORD_[0-9]+|JOINTS_[0-9]+|WEIGHTS_[0-9]+|_[A-Z_][A-Z0-9_]*)$": {
                             "allOf": [{"$ref": "glTFid.schema.json"}]
