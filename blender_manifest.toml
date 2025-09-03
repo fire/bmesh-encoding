@@ -1,0 +1,41 @@
+# SPDX-License-Identifier: MIT OR GPL-3.0-or-later
+schema_version = "1.0.0"
+
+id = "ext_bmesh_encoding"
+version = "1.0.0"
+name = "EXT_bmesh_encoding"
+tagline = "glTF extension for BMesh topology preservation"
+maintainer = "VRM Consortium"
+type = "add-on"
+
+website = "https://github.com/vrm-c/VRM-Addon-for-Blender"
+doc_url = "https://github.com/vrm-c/vrm-specification/tree/master/specification/0.0/schema/extensions/EXT_bmesh_encoding"
+
+description = """
+Standalone Blender addon for the EXT_bmesh_encoding glTF extension.
+
+This extension preserves BMesh topology information during glTF export,
+allowing for accurate reconstruction of mesh connectivity and edge flow
+in supporting applications.
+
+Features:
+- Preserves vertex adjacency information
+- Maintains edge connectivity and manifold status
+- Supports UV coordinate mapping
+- Compatible with glTF 2.0 specification
+"""
+
+blender_version_min = "3.6.0"
+
+permissions = []
+
+tags = ["Import-Export", "Mesh", "glTF"]
+
+license = [
+    "SPDX:MIT",
+    "SPDX:GPL-3.0-or-later"
+]
+
+copyright = [
+    "2025 VRM Consortium"
+]
