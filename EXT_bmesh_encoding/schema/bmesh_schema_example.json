@@ -1,0 +1,150 @@
+{
+    "id": "EXT_bmesh_encoding_schema",
+    "name": "EXT_bmesh_encoding Schema",
+    "description": "Schema for storing BMesh topology data using EXT_structural_metadata",
+    "version": "1.0.0",
+    "enums": {
+        "manifoldStatus": {
+            "name": "Manifold Status",
+            "description": "Enumeration for edge manifold status",
+            "values": [
+                {"name": "NonManifold", "value": 0},
+                {"name": "Manifold", "value": 1},
+                {"name": "Unknown", "value": 255}
+            ]
+        }
+    },
+    "classes": {
+        "vertex": {
+            "name": "BMesh Vertex",
+            "description": "Represents a vertex in BMesh topology",
+            "properties": {
+                "position": {
+                    "description": "3D position coordinates of the vertex",
+                    "type": "VEC3",
+                    "componentType": "FLOAT32",
+                    "required": true
+                },
+                "connectedEdges": {
+                    "description": "List of edge indices connected to this vertex",
+                    "type": "SCALAR",
+                    "componentType": "UINT32",
+                    "array": true,
+                    "required": true
+                }
+            }
+        },
+        "edge": {
+            "name": "BMesh Edge",
+            "description": "Represents an edge connecting two vertices in BMesh topology",
+            "properties": {
+                "vertex0": {
+                    "description": "Index of the first vertex of this edge",
+                    "type": "SCALAR",
+                    "componentType": "UINT32",
+                    "required": true
+                },
+                "vertex1": {
+                    "description": "Index of the second vertex of this edge",
+                    "type": "SCALAR",
+                    "componentType": "UINT32",
+                    "required": true
+                },
+                "manifoldStatus": {
+                    "description": "Manifold status of the edge",
+                    "type": "ENUM",
+                    "enumType": "manifoldStatus",
+                    "required": false
+                },
+                "adjacentFaces": {
+                    "description": "List of face indices adjacent to this edge",
+                    "type": "SCALAR",
+                    "componentType": "UINT32",
+                    "array": true,
+                    "required": true
+                }
+            }
+        },
+        "loop": {
+            "name": "BMesh Loop",
+            "description": "Represents a corner loop in BMesh topology",
+            "properties": {
+                "vertex": {
+                    "description": "Index of the vertex this loop belongs to",
+                    "type": "SCALAR",
+                    "componentType": "UINT32",
+                    "required": true
+                },
+                "edge": {
+                    "description": "Index of the edge this loop belongs to",
+                    "type": "SCALAR",
+                    "componentType": "UINT32",
+                    "required": true
+                },
+                "face": {
+                    "description": "Index of the face this loop belongs to",
+                    "type": "SCALAR",
+                    "componentType": "UINT32",
+                    "required": true
+                },
+                "next": {
+                    "description": "Index of the next loop in the face",
+                    "type": "SCALAR",
+                    "componentType": "UINT32",
+                    "required": true
+                },
+                "prev": {
+                    "description": "Index of the previous loop in the face",
+                    "type": "SCALAR",
+                    "componentType": "UINT32",
+                    "required": true
+                },
+                "radialNext": {
+                    "description": "Index of the next loop around the edge",
+                    "type": "SCALAR",
+                    "componentType": "UINT32",
+                    "required": true
+                },
+                "radialPrev": {
+                    "description": "Index of the previous loop around the edge",
+                    "type": "SCALAR",
+                    "componentType": "UINT32",
+                    "required": true
+                }
+            }
+        },
+        "face": {
+            "name": "BMesh Face",
+            "description": "Represents a polygonal face in BMesh topology",
+            "properties": {
+                "vertices": {
+                    "description": "List of vertex indices that form this face",
+                    "type": "SCALAR",
+                    "componentType": "UINT32",
+                    "array": true,
+                    "required": true
+                },
+                "edges": {
+                    "description": "List of edge indices that bound this face",
+                    "type": "SCALAR",
+                    "componentType": "UINT32",
+                    "array": true,
+                    "required": true
+                },
+                "loops": {
+                    "description": "List of loop indices that form this face",
+                    "type": "SCALAR",
+                    "componentType": "UINT32",
+                    "array": true,
+                    "required": true
+                },
+                "normal": {
+                    "description": "Normal vector of the face",
+                    "type": "VEC3",
+                    "componentType": "FLOAT32",
+                    "required": true
+                }
+            }
+        }
+    }
+}

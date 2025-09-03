@@ -1,0 +1,599 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "glTF.EXT_structural_metadata.bmesh.schema.json",
+    "title": "EXT_structural_metadata BMesh Schema",
+    "type": "object",
+    "description": "Schema definition for BMesh topology data using EXT_structural_metadata",
+    "properties": {
+        "id": {
+            "type": "string",
+            "description": "Unique identifier for this schema"
+        },
+        "name": {
+            "type": "string",
+            "description": "Human-readable name for the schema"
+        },
+        "description": {
+            "type": "string",
+            "description": "Description of the schema purpose"
+        },
+        "version": {
+            "type": "string",
+            "description": "Version of the schema"
+        },
+        "enums": {
+            "type": "object",
+            "description": "Enumeration definitions for categorical data",
+            "properties": {
+                "manifoldStatus": {
+                    "type": "object",
+                    "description": "Enumeration for edge manifold status",
+                    "properties": {
+                        "name": {
+                            "type": "string",
+                            "description": "Name of the enum"
+                        },
+                        "description": {
+                            "type": "string",
+                            "description": "Description of the enum"
+                        },
+                        "values": {
+                            "type": "array",
+                            "description": "Enum values",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "description": "Name of the enum value"
+                                    },
+                                    "value": {
+                                        "type": "integer",
+                                        "description": "Integer value of the enum"
+                                    }
+                                },
+                                "required": ["name", "value"]
+                            }
+                        }
+                    },
+                    "required": ["name", "description", "values"]
+                }
+            }
+        },
+        "classes": {
+            "type": "object",
+            "description": "Class definitions for BMesh entities",
+            "properties": {
+                "vertex": {
+                    "type": "object",
+                    "description": "Class definition for BMesh vertices",
+                    "properties": {
+                        "name": {
+                            "type": "string",
+                            "description": "Name of the vertex class"
+                        },
+                        "description": {
+                            "type": "string",
+                            "description": "Description of vertex properties"
+                        },
+                        "properties": {
+                            "type": "object",
+                            "description": "Properties of a vertex",
+                            "properties": {
+                                "position": {
+                                    "type": "object",
+                                    "description": "3D position of the vertex",
+                                    "properties": {
+                                        "description": {
+                                            "type": "string",
+                                            "description": "Description of the position property"
+                                        },
+                                        "type": {
+                                            "type": "string",
+                                            "enum": ["VEC3"],
+                                            "description": "Property type"
+                                        },
+                                        "componentType": {
+                                            "type": "string",
+                                            "enum": ["FLOAT32"],
+                                            "description": "Component data type"
+                                        },
+                                        "required": {
+                                            "type": "boolean",
+                                            "description": "Whether this property is required"
+                                        }
+                                    },
+                                    "required": ["description", "type", "componentType", "required"]
+                                },
+                                "connectedEdges": {
+                                    "type": "object",
+                                    "description": "List of edges connected to this vertex",
+                                    "properties": {
+                                        "description": {
+                                            "type": "string",
+                                            "description": "Description of connected edges"
+                                        },
+                                        "type": {
+                                            "type": "string",
+                                            "enum": ["SCALAR"],
+                                            "description": "Property type"
+                                        },
+                                        "componentType": {
+                                            "type": "string",
+                                            "enum": ["UINT32"],
+                                            "description": "Component data type"
+                                        },
+                                        "array": {
+                                            "type": "boolean",
+                                            "description": "Whether this is an array property"
+                                        },
+                                        "required": {
+                                            "type": "boolean",
+                                            "description": "Whether this property is required"
+                                        }
+                                    },
+                                    "required": ["description", "type", "componentType", "array", "required"]
+                                }
+                            }
+                        }
+                    },
+                    "required": ["name", "description", "properties"]
+                },
+                "edge": {
+                    "type": "object",
+                    "description": "Class definition for BMesh edges",
+                    "properties": {
+                        "name": {
+                            "type": "string",
+                            "description": "Name of the edge class"
+                        },
+                        "description": {
+                            "type": "string",
+                            "description": "Description of edge properties"
+                        },
+                        "properties": {
+                            "type": "object",
+                            "description": "Properties of an edge",
+                            "properties": {
+                                "vertex0": {
+                                    "type": "object",
+                                    "description": "First vertex of the edge",
+                                    "properties": {
+                                        "description": {
+                                            "type": "string",
+                                            "description": "Description of vertex0 property"
+                                        },
+                                        "type": {
+                                            "type": "string",
+                                            "enum": ["SCALAR"],
+                                            "description": "Property type"
+                                        },
+                                        "componentType": {
+                                            "type": "string",
+                                            "enum": ["UINT32"],
+                                            "description": "Component data type"
+                                        },
+                                        "required": {
+                                            "type": "boolean",
+                                            "description": "Whether this property is required"
+                                        }
+                                    },
+                                    "required": ["description", "type", "componentType", "required"]
+                                },
+                                "vertex1": {
+                                    "type": "object",
+                                    "description": "Second vertex of the edge",
+                                    "properties": {
+                                        "description": {
+                                            "type": "string",
+                                            "description": "Description of vertex1 property"
+                                        },
+                                        "type": {
+                                            "type": "string",
+                                            "enum": ["SCALAR"],
+                                            "description": "Property type"
+                                        },
+                                        "componentType": {
+                                            "type": "string",
+                                            "enum": ["UINT32"],
+                                            "description": "Component data type"
+                                        },
+                                        "required": {
+                                            "type": "boolean",
+                                            "description": "Whether this property is required"
+                                        }
+                                    },
+                                    "required": ["description", "type", "componentType", "required"]
+                                },
+                                "manifoldStatus": {
+                                    "type": "object",
+                                    "description": "Manifold status of the edge",
+                                    "properties": {
+                                        "description": {
+                                            "type": "string",
+                                            "description": "Description of manifold status"
+                                        },
+                                        "type": {
+                                            "type": "string",
+                                            "enum": ["ENUM"],
+                                            "description": "Property type"
+                                        },
+                                        "enumType": {
+                                            "type": "string",
+                                            "description": "Reference to enum type"
+                                        },
+                                        "required": {
+                                            "type": "boolean",
+                                            "description": "Whether this property is required"
+                                        }
+                                    },
+                                    "required": ["description", "type", "enumType", "required"]
+                                },
+                                "adjacentFaces": {
+                                    "type": "object",
+                                    "description": "Faces adjacent to this edge",
+                                    "properties": {
+                                        "description": {
+                                            "type": "string",
+                                            "description": "Description of adjacent faces"
+                                        },
+                                        "type": {
+                                            "type": "string",
+                                            "enum": ["SCALAR"],
+                                            "description": "Property type"
+                                        },
+                                        "componentType": {
+                                            "type": "string",
+                                            "enum": ["UINT32"],
+                                            "description": "Component data type"
+                                        },
+                                        "array": {
+                                            "type": "boolean",
+                                            "description": "Whether this is an array property"
+                                        },
+                                        "required": {
+                                            "type": "boolean",
+                                            "description": "Whether this property is required"
+                                        }
+                                    },
+                                    "required": ["description", "type", "componentType", "array", "required"]
+                                }
+                            }
+                        }
+                    },
+                    "required": ["name", "description", "properties"]
+                },
+                "loop": {
+                    "type": "object",
+                    "description": "Class definition for BMesh loops",
+                    "properties": {
+                        "name": {
+                            "type": "string",
+                            "description": "Name of the loop class"
+                        },
+                        "description": {
+                            "type": "string",
+                            "description": "Description of loop properties"
+                        },
+                        "properties": {
+                            "type": "object",
+                            "description": "Properties of a loop",
+                            "properties": {
+                                "vertex": {
+                                    "type": "object",
+                                    "description": "Vertex this loop belongs to",
+                                    "properties": {
+                                        "description": {
+                                            "type": "string",
+                                            "description": "Description of vertex property"
+                                        },
+                                        "type": {
+                                            "type": "string",
+                                            "enum": ["SCALAR"],
+                                            "description": "Property type"
+                                        },
+                                        "componentType": {
+                                            "type": "string",
+                                            "enum": ["UINT32"],
+                                            "description": "Component data type"
+                                        },
+                                        "required": {
+                                            "type": "boolean",
+                                            "description": "Whether this property is required"
+                                        }
+                                    },
+                                    "required": ["description", "type", "componentType", "required"]
+                                },
+                                "edge": {
+                                    "type": "object",
+                                    "description": "Edge this loop belongs to",
+                                    "properties": {
+                                        "description": {
+                                            "type": "string",
+                                            "description": "Description of edge property"
+                                        },
+                                        "type": {
+                                            "type": "string",
+                                            "enum": ["SCALAR"],
+                                            "description": "Property type"
+                                        },
+                                        "componentType": {
+                                            "type": "string",
+                                            "enum": ["UINT32"],
+                                            "description": "Component data type"
+                                        },
+                                        "required": {
+                                            "type": "boolean",
+                                            "description": "Whether this property is required"
+                                        }
+                                    },
+                                    "required": ["description", "type", "componentType", "required"]
+                                },
+                                "face": {
+                                    "type": "object",
+                                    "description": "Face this loop belongs to",
+                                    "properties": {
+                                        "description": {
+                                            "type": "string",
+                                            "description": "Description of face property"
+                                        },
+                                        "type": {
+                                            "type": "string",
+                                            "enum": ["SCALAR"],
+                                            "description": "Property type"
+                                        },
+                                        "componentType": {
+                                            "type": "string",
+                                            "enum": ["UINT32"],
+                                            "description": "Component data type"
+                                        },
+                                        "required": {
+                                            "type": "boolean",
+                                            "description": "Whether this property is required"
+                                        }
+                                    },
+                                    "required": ["description", "type", "componentType", "required"]
+                                },
+                                "next": {
+                                    "type": "object",
+                                    "description": "Next loop in the face",
+                                    "properties": {
+                                        "description": {
+                                            "type": "string",
+                                            "description": "Description of next loop property"
+                                        },
+                                        "type": {
+                                            "type": "string",
+                                            "enum": ["SCALAR"],
+                                            "description": "Property type"
+                                        },
+                                        "componentType": {
+                                            "type": "string",
+                                            "enum": ["UINT32"],
+                                            "description": "Component data type"
+                                        },
+                                        "required": {
+                                            "type": "boolean",
+                                            "description": "Whether this property is required"
+                                        }
+                                    },
+                                    "required": ["description", "type", "componentType", "required"]
+                                },
+                                "prev": {
+                                    "type": "object",
+                                    "description": "Previous loop in the face",
+                                    "properties": {
+                                        "description": {
+                                            "type": "string",
+                                            "description": "Description of previous loop property"
+                                        },
+                                        "type": {
+                                            "type": "string",
+                                            "enum": ["SCALAR"],
+                                            "description": "Property type"
+                                        },
+                                        "componentType": {
+                                            "type": "string",
+                                            "enum": ["UINT32"],
+                                            "description": "Component data type"
+                                        },
+                                        "required": {
+                                            "type": "boolean",
+                                            "description": "Whether this property is required"
+                                        }
+                                    },
+                                    "required": ["description", "type", "componentType", "required"]
+                                },
+                                "radialNext": {
+                                    "type": "object",
+                                    "description": "Next loop around the edge",
+                                    "properties": {
+                                        "description": {
+                                            "type": "string",
+                                            "description": "Description of radial next property"
+                                        },
+                                        "type": {
+                                            "type": "string",
+                                            "enum": ["SCALAR"],
+                                            "description": "Property type"
+                                        },
+                                        "componentType": {
+                                            "type": "string",
+                                            "enum": ["UINT32"],
+                                            "description": "Component data type"
+                                        },
+                                        "required": {
+                                            "type": "boolean",
+                                            "description": "Whether this property is required"
+                                        }
+                                    },
+                                    "required": ["description", "type", "componentType", "required"]
+                                },
+                                "radialPrev": {
+                                    "type": "object",
+                                    "description": "Previous loop around the edge",
+                                    "properties": {
+                                        "description": {
+                                            "type": "string",
+                                            "description": "Description of radial previous property"
+                                        },
+                                        "type": {
+                                            "type": "string",
+                                            "enum": ["SCALAR"],
+                                            "description": "Property type"
+                                        },
+                                        "componentType": {
+                                            "type": "string",
+                                            "enum": ["UINT32"],
+                                            "description": "Component data type"
+                                        },
+                                        "required": {
+                                            "type": "boolean",
+                                            "description": "Whether this property is required"
+                                        }
+                                    },
+                                    "required": ["description", "type", "componentType", "required"]
+                                }
+                            }
+                        }
+                    },
+                    "required": ["name", "description", "properties"]
+                },
+                "face": {
+                    "type": "object",
+                    "description": "Class definition for BMesh faces",
+                    "properties": {
+                        "name": {
+                            "type": "string",
+                            "description": "Name of the face class"
+                        },
+                        "description": {
+                            "type": "string",
+                            "description": "Description of face properties"
+                        },
+                        "properties": {
+                            "type": "object",
+                            "description": "Properties of a face",
+                            "properties": {
+                                "vertices": {
+                                    "type": "object",
+                                    "description": "Vertices of this face",
+                                    "properties": {
+                                        "description": {
+                                            "type": "string",
+                                            "description": "Description of vertices property"
+                                        },
+                                        "type": {
+                                            "type": "string",
+                                            "enum": ["SCALAR"],
+                                            "description": "Property type"
+                                        },
+                                        "componentType": {
+                                            "type": "string",
+                                            "enum": ["UINT32"],
+                                            "description": "Component data type"
+                                        },
+                                        "array": {
+                                            "type": "boolean",
+                                            "description": "Whether this is an array property"
+                                        },
+                                        "required": {
+                                            "type": "boolean",
+                                            "description": "Whether this property is required"
+                                        }
+                                    },
+                                    "required": ["description", "type", "componentType", "array", "required"]
+                                },
+                                "edges": {
+                                    "type": "object",
+                                    "description": "Edges of this face",
+                                    "properties": {
+                                        "description": {
+                                            "type": "string",
+                                            "description": "Description of edges property"
+                                        },
+                                        "type": {
+                                            "type": "string",
+                                            "enum": ["SCALAR"],
+                                            "description": "Property type"
+                                        },
+                                        "componentType": {
+                                            "type": "string",
+                                            "enum": ["UINT32"],
+                                            "description": "Component data type"
+                                        },
+                                        "array": {
+                                            "type": "boolean",
+                                            "description": "Whether this is an array property"
+                                        },
+                                        "required": {
+                                            "type": "boolean",
+                                            "description": "Whether this property is required"
+                                        }
+                                    },
+                                    "required": ["description", "type", "componentType", "array", "required"]
+                                },
+                                "loops": {
+                                    "type": "object",
+                                    "description": "Loops of this face",
+                                    "properties": {
+                                        "description": {
+                                            "type": "string",
+                                            "description": "Description of loops property"
+                                        },
+                                        "type": {
+                                            "type": "string",
+                                            "enum": ["SCALAR"],
+                                            "description": "Property type"
+                                        },
+                                        "componentType": {
+                                            "type": "string",
+                                            "enum": ["UINT32"],
+                                            "description": "Component data type"
+                                        },
+                                        "array": {
+                                            "type": "boolean",
+                                            "description": "Whether this is an array property"
+                                        },
+                                        "required": {
+                                            "type": "boolean",
+                                            "description": "Whether this property is required"
+                                        }
+                                    },
+                                    "required": ["description", "type", "componentType", "array", "required"]
+                                },
+                                "normal": {
+                                    "type": "object",
+                                    "description": "Face normal vector",
+                                    "properties": {
+                                        "description": {
+                                            "type": "string",
+                                            "description": "Description of normal property"
+                                        },
+                                        "type": {
+                                            "type": "string",
+                                            "enum": ["VEC3"],
+                                            "description": "Property type"
+                                        },
+                                        "componentType": {
+                                            "type": "string",
+                                            "enum": ["FLOAT32"],
+                                            "description": "Component data type"
+                                        },
+                                        "required": {
+                                            "type": "boolean",
+                                            "description": "Whether this property is required"
+                                        }
+                                    },
+                                    "required": ["description", "type", "componentType", "required"]
+                                }
+                            }
+                        }
+                    },
+                    "required": ["name", "description", "properties"]
+                }
+            }
+        }
+    },
+    "required": ["id", "name", "description", "version", "classes"]
+}
