@@ -45,6 +45,10 @@ Building on the minimal OpenSubdiv requirements, EXT_bmesh_encoding integrates s
 
 This approach follows BMesh philosophy by storing subdivision data as attributes on topological elements, enabling direct compatibility with OpenSubdiv and other subdivision surface implementations while maintaining clean integration with the mesh topology.
 
+### Recommended: Sparse Accessors for Coarse Attributes
+
+**Sparse accessors** are strongly recommended for compressing coarse mesh attributes in EXT_bmesh_encoding. Sparse accessors work by storing a base set of values for the full attribute array plus sparse overrides specifying only non-default values at specific indices, as defined in the glTF 2.0 core specification (section 3.6.1.3).
+
 ## Key Features
 
 ### Buffer-Based Storage
