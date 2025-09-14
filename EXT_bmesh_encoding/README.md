@@ -57,10 +57,27 @@ This approach follows BMesh philosophy by storing subdivision data as attributes
 
 ## Extension Structure
 
-glTF buffer format (all data stored in buffer views):
+The EXT_bmesh_encoding extension integrates seamlessly into glTF 2.0 primitives, storing complete BMesh topology in buffer views for optimal performance. Below is the maximal data structure showing all possible features, including OpenSubdiv subdivision surface attributes.
+
+### Maximal glTF Example with EXT_bmesh_encoding
 
 ```json
 {
+  "asset": {
+    "version": "2.0",
+    "generator": "EXT_bmesh_encoding maximal example"
+  },
+  "scene": 0,
+  "scenes": [
+    {
+      "nodes": [0]
+    }
+  ],
+  "nodes": [
+    {
+      "mesh": 0
+    }
+  ],
   "meshes": [
     {
       "name": "BMeshModel",
@@ -78,44 +95,90 @@ glTF buffer format (all data stored in buffer views):
             "EXT_bmesh_encoding": {
               "vertices": {
                 "count": 10000,
-                "positions": 10,
-                "edges": 11
+                "positions": 4,
+                "edges": 5,
+                "attributes": {
+                  "POSITION": 4,
+                  "NORMAL": 6,
+                  "TANGENT": 7,
+                  "COLOR_0": 8,
+                  "TEXCOORD_0": 9,
+                  "JOINTS_0": 10,
+                  "WEIGHTS_0": 11,
+                  "CREASE": 12
+                }
               },
               "edges": {
                 "count": 15000,
                 "vertices": 13,
                 "faces": 14,
-                "manifold": 15
+                "manifold": 15,
+                "attributes": {
+                  "CREASE": 16
+                }
               },
               "loops": {
                 "count": 20000,
-                "topology_vertex": 16,
-                "topology_edge": 17,
-                "topology_face": 18,
-                "topology_next": 19,
-                "topology_prev": 20,
-                "topology_radial_next": 21,
-                "topology_radial_prev": 22,
+                "topology_vertex": 17,
+                "topology_edge": 18,
+                "topology_face": 19,
+                "topology_next": 20,
+                "topology_prev": 21,
+                "topology_radial_next": 22,
+                "topology_radial_prev": 23,
                 "attributes": {
-                  "TEXCOORD_0": 23
+                  "TEXCOORD_0": 24,
+                  "COLOR_0": 25
                 }
               },
               "faces": {
                 "count": 5000,
-                "vertices": 24,
-                "edges": 25,
-                "loops": 26,
-                "offsets": 27,
-                "normals": 28
+                "vertices": 26,
+                "edges": 27,
+                "loops": 28,
+                "offsets": 29,
+                "normals": 30,
+                "attributes": {
+                  "HOLES": 31
+                }
               }
             }
           }
         }
       ]
     }
-  ]
+  ],
+  "materials": [
+    {
+      "name": "DefaultMaterial"
+    }
+  ],
+  "buffers": [...],
+  "bufferViews": [...],
+  "extensionsUsed": ["EXT_bmesh_encoding"],
+  "extensionsRequired": []
 }
 ```
+
+### Key Features in Maximal Structure
+
+**OpenSubdiv Subdivision Surface Integration:**
+- **Vertex CREASE** (buffer view 12): f32 sharpness values for subdivision creases
+- **Edge CREASE** (buffer view 16): f32 sharpness values for edge creases  
+- **Face HOLES** (buffer view 31): u8 flags (1=holes, 0=regular faces)
+
+**Complete BMesh Topology:**
+- Full SOA (Struct of Arrays) topology storage for vertices, edges, loops, faces
+- Variable-length arrays with offset indexing for face connectivity
+- Non-manifold support via manifold flags and radial navigation
+
+**Standard glTF Attributes:**
+- POSITION, NORMAL, TANGENT for vertices
+- TEXCOORD_0, COLOR_0 for loops (per-corner attributes)
+- JOINTS_0, WEIGHTS_0 for skinning
+
+**Future ATTRIBUTES Extensibility:**
+The buffer view system naturally supports arbitrary attributes through additional buffer views and accessors, allowing future wildcard attribute expansion without breaking compatibility.
 
 ## Implicit Triangle Fan Algorithm
 
