@@ -502,8 +502,7 @@ function readBufferView(buffers, bufferViews, bufferViewIndex) {
 
 ## Known Implementations
 
-- Aria BMesh Domain (Elixir) - In Development
-- VRM Add-on for Blender (Python) - Active Development
+- To be determined
 
 ## BMesh Data Structures
 
