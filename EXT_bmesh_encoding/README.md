@@ -1,4 +1,4 @@
-# EXT_structural_metadata with BMesh
+# EXT_bmesh_encoding
 
 ## Contributors
 
@@ -25,91 +25,83 @@ The BMesh data structure is described in:
 
 While glTF can only deliver a polygon mesh after it's been decomposed into triangles, there are cases where access to the full BMesh topology is still useful. BMesh provides a non-manifold boundary representation with vertices, edges, loops, and faces that enables complex geometric operations.
 
-This implementation provides **property table-based BMesh encoding** that stores complete topology information in EXT_structural_metadata property tables for performance while maintaining full glTF 2.0 compatibility.
+This extension provides **buffer-based BMesh encoding** that stores complete topology information in glTF buffers for optimal performance while maintaining full glTF 2.0 compatibility.
 
-The `EXT_structural_metadata` glTF extension solves the problem of topological data loss when models with quads and n-gons are converted to glTF's triangle-only format. It works by embedding the **BMesh** data structure, allowing for reconstruction of the original model.
+The `EXT_bmesh_encoding` glTF extension solves the problem of topological data loss when models with quads and n-gons are converted to glTF's triangle-only format. It works by embedding the **BMesh** data structure, allowing for reconstruction of the original model.
 
 What makes BMesh so powerful is its ability to represent complex, **non-manifold** geometry. Unlike mesh formats that limit an edge to connecting only two faces, BMesh uses a system of **radial loops** (`radial_next` and `radial_prev` pointers). This is like a book spine that can connect every single page, not just the two covers.
 
-`EXT_structural_metadata` allows for the preservation of models where multiple faces meet at a single edge, ensuring the artist's intent is maintained.
+`EXT_bmesh_encoding` allows for the preservation of models where multiple faces meet at a single edge, ensuring the artist's intent is maintained.
 
 ## Key Features
 
-### Property Table Storage
+### Buffer-Based Storage
 
-- **High Performance**: All BMesh data stored in binary property tables for optimal memory usage
-- **glTF 2.0 Compliance**: Follows standard EXT_structural_metadata property table patterns
+- **High Performance**: All BMesh data stored in binary buffers for optimal memory usage
+- **glTF 2.0 Compliance**: Follows standard glTF buffer view and accessor patterns
 - **Scalable**: Efficient for meshes of any size
 - **Standard Attributes**: Uses glTF 2.0 attribute naming conventions (TEXCOORD_0, etc.)
 - **Non-manifold Support**: Complete support for non-manifold edges and vertices
 
 ## Extension Structure
 
-glTF property table format (all data stored in property tables):
+glTF buffer format (all data stored in buffer views):
 
 ```json
 {
-  "extensions": {
-    "EXT_structural_metadata": {
-      "schema": {
-        "id": "BMesh_schema",
-        "classes": {
-          "vertex": {...},
-          "edge": {...},
-          "loop": {...},
-          "face": {...}
-        }
-      },
-      "propertyTables": [
+  "meshes": [
+    {
+      "name": "BMeshModel",
+      "primitives": [
         {
-          "name": "BMesh Vertices",
-          "class": "vertex",
-          "count": 10000,
-          "properties": {
-            "position": {"values": 0},
-            "connectedEdges": {"values": 1}
-          }
-        },
-        {
-          "name": "BMesh Edges",
-          "class": "edge",
-          "count": 15000,
-          "properties": {
-            "vertex0": {"values": 2},
-            "vertex1": {"values": 3},
-            "adjacentFaces": {"values": 4},
-            "manifoldStatus": {"values": 5}
-          }
-        },
-        {
-          "name": "BMesh Loops",
-          "class": "loop",
-          "count": 20000,
-          "properties": {
-            "vertex": {"values": 6},
-            "edge": {"values": 7},
-            "face": {"values": 8},
-            "next": {"values": 9},
-            "prev": {"values": 10},
-            "radialNext": {"values": 11},
-            "radialPrev": {"values": 12}
-          }
-        },
-        {
-          "name": "BMesh Faces",
-          "class": "face",
-          "count": 5000,
-          "properties": {
-            "vertices": {"values": 13},
-            "edges": {"values": 14},
-            "loops": {"values": 15},
-            "offsets": {"values": 16},
-            "normals": {"values": 17}
+          "indices": 0,
+          "attributes": {
+            "POSITION": 1,
+            "NORMAL": 2,
+            "TEXCOORD_0": 3
+          },
+          "material": 0,
+          "mode": 4,
+          "extensions": {
+            "EXT_bmesh_encoding": {
+              "vertices": {
+                "count": 10000,
+                "positions": 10,
+                "edges": 11
+              },
+              "edges": {
+                "count": 15000,
+                "vertices": 13,
+                "faces": 14,
+                "manifold": 15
+              },
+              "loops": {
+                "count": 20000,
+                "topology_vertex": 16,
+                "topology_edge": 17,
+                "topology_face": 18,
+                "topology_next": 19,
+                "topology_prev": 20,
+                "topology_radial_next": 21,
+                "topology_radial_prev": 22,
+                "attributes": {
+                  "TEXCOORD_0": 23
+                }
+              },
+              "faces": {
+                "count": 5000,
+                "vertices": 24,
+                "edges": 25,
+                "loops": 26,
+                "offsets": 27,
+                "normals": 28
+              }
+            }
           }
         }
       ]
     }
-  }
+  ]
 }
 ```
 
@@ -127,10 +119,17 @@ Like FB_ngon_encoding, the **order of triangles and per-triangle vertex indices*
 
 ### Encoding Process (Implicit Layer)
 
-1. **BMesh Face Analysis**: Analyze BMesh faces for triangulation
+1. **BMesh Face Analysis**: Analyze BMesh faces for optimal triangulation
 2. **Enhanced Anchor Selection**: Choose anchor vertex to minimize reconstruction ambiguity
-3. **Triangle Fan Generation**: Create triangle fans with vertex ordering
+3. **Triangle Fan Generation**: Create triangle fans with optimal vertex ordering
 4. **Standard glTF Output**: Produce standard glTF triangles following triangle fan pattern
+
+### Buffer-Based Encoding Process (SOA)
+
+1. **BMesh Analysis**: Extract vertices, edges, loops, and faces from BMesh
+2. **SOA Buffer Creation**: Create 7 separate topology buffers for loops
+3. **Variable-Length Encoding**: Encode face vertex/edge/loop arrays with offsets
+4. **Buffer View Assignment**: Assign all data to glTF buffer views
 
 ### Reconstruction Process
 
@@ -139,61 +138,67 @@ Like FB_ngon_encoding, the **order of triangles and per-triangle vertex indices*
 3. **Topology Inference**: Infer BMesh edge and loop structure from face connectivity
 4. **Validation**: Validate reconstructed BMesh for topological consistency
 
-## Property Table Layouts
+### Buffer-Based Reconstruction Process (SOA)
 
-All BMesh topology data is stored in EXT_structural_metadata property tables using efficient binary layouts:
+1. **Buffer Reading**: Read SOA topology buffers from glTF buffer views
+2. **BMesh Construction**: Reconstruct vertices, edges, loops, faces from buffers
+3. **Topology Linking**: Restore all navigation pointers and relationships
+4. **Attribute Assignment**: Apply stored attributes to all topology elements
 
-### Vertex Properties
+## Buffer Layouts
 
-- **position**: `Vec3<f32>` (12 bytes per vertex) - 3D coordinates
-- **connectedEdges**: Variable-length edge index arrays with offset indexing
+All BMesh topology data is stored in glTF buffers using efficient binary layouts:
+
+### Vertex Buffers
+
+- **positions**: `Vec3<f32>` (12 bytes per vertex) - 3D coordinates
+- **edges**: Variable-length edge lists with offset indexing
 - **attributes**: Standard glTF attributes (POSITION, NORMAL, TEXCOORD_0, etc.)
 
-### Edge Properties
+### Edge Buffers
 
-- **vertex0**: `u32` - First vertex index
-- **vertex1**: `u32` - Second vertex index
-- **adjacentFaces**: Variable-length face index arrays with offset indexing
-- **manifoldStatus**: `u8` - Manifold status flag
+- **vertices**: `[u32, u32]` (8 bytes per edge) - vertex index pairs
+- **faces**: Variable-length face lists with offset indexing
+- **manifold**: `u8` (1 byte per edge) - manifold status flag
   - `0`: Confirmed non-manifold
   - `1`: Confirmed manifold
   - `255`: Unknown status
 - **attributes**: Custom edge data with `_` prefix naming
 
-### Loop Properties
+### Loop Buffers
 
-- **vertex**: `u32` - Corner vertex index
-- **edge**: `u32` - Outgoing edge index
-- **face**: `u32` - Containing face index
-- **next**: `u32` - Next loop in face
-- **prev**: `u32` - Previous loop in face
-- **radialNext**: `u32` - Next loop around edge
-- **radialPrev**: `u32` - Previous loop around edge
+- **topology_vertex**: `u32` (4 bytes per loop) - vertex indices
+- **topology_edge**: `u32` (4 bytes per loop) - edge indices
+- **topology_face**: `u32` (4 bytes per loop) - face indices
+- **topology_next**: `u32` (4 bytes per loop) - next loop indices
+- **topology_prev**: `u32` (4 bytes per loop) - prev loop indices
+- **topology_radial_next**: `u32` (4 bytes per loop) - radial_next loop indices
+- **topology_radial_prev**: `u32` (4 bytes per loop) - radial_prev loop indices
 - **attributes**: glTF 2.0 compliant attributes (TEXCOORD_0, COLOR_0, etc.)
 
-### Face Properties
+### Face Buffers
 
-- **vertices**: Variable-length vertex index arrays
-- **edges**: Variable-length edge index arrays
-- **loops**: Variable-length loop index arrays
-- **offsets**: `[u32; 3]` - Start offsets for vertices, edges, loops arrays
-- **normals**: `Vec3<f32>` - Face normal vectors
+- **vertices**: Variable-length vertex index lists
+- **edges**: Variable-length edge index lists
+- **loops**: Variable-length loop index lists
+- **offsets**: `[u32; 3]` (12 bytes per face) - start offsets for vertices, edges, loops arrays
+- **normals**: `Vec3<f32>` (12 bytes per face) - face normal vectors
 - **attributes**: Custom face data with `_` prefix naming
 
 ### Variable-Length Array Encoding
 
 For arrays with variable length (face vertices, edges, loops), data is stored as:
 
-1. **Packed Data Arrays**: Concatenated array elements in property table values
-2. **Offset Arrays**: Start indices for each element's data in separate property
+1. **Packed Data Buffer**: Concatenated array elements
+2. **Offset Buffer**: Start indices for each element's data
 3. **Access Pattern**: `data[offsets[i]:offsets[i+1]]` gives element i's array
 
 ## Implementation Requirements
 
-All EXT_structural_metadata BMesh implementations must support:
+All EXT_bmesh_encoding implementations must support:
 
-1. **Property Table Storage**: All topology data in EXT_structural_metadata property tables for performance
-2. **glTF 2.0 Compliance**: Standard property table patterns and attribute naming
+1. **Buffer-Based Storage**: All topology data in glTF buffers for performance
+2. **glTF 2.0 Compliance**: Standard buffer views, accessors, and attribute naming
 3. **Triangle Fan Compatibility**: Maintains FB_ngon_encoding reconstruction principles
 4. **Complete Topology**: Full BMesh reconstruction with vertices, edges, loops, faces
 5. **Graceful Degradation**: Automatic fallback to triangle fan reconstruction when extension unsupported
@@ -202,29 +207,29 @@ All EXT_structural_metadata BMesh implementations must support:
 
 **Simple Writers** (minimal implementation):
 
-- Use `manifoldStatus: 255` for all edges (no manifold checking required)
+- Use `manifold: 255` for all edges (no manifold checking required)
 - Store basic BMesh topology without complex validation
-- Focus on core property table encoding functionality
+- Focus on core buffer encoding functionality
 
 **Advanced Writers** (full implementation):
 
 - Perform manifold checking and set appropriate manifold values (0, 1, 255)
 - Validate topology during encoding
-- Optimize property table layouts for specific use cases
+- Optimize buffer layouts for specific use cases
 
 **Readers** (all implementations):
 
 - Handle all three manifold states gracefully
 - Provide fallback behavior for unknown manifold status
-- Support reconstruction from either implicit triangles or explicit property tables
+- Support reconstruction from either implicit triangles or explicit buffers
 
 ## Advantages over FB_ngon_encoding
 
 1. **Complete Topology**: Full BMesh structure with edges and loops, not just faces
-2. **Performance Optimized**: Binary property table storage instead of JSON arrays
+2. **Performance Optimized**: Binary buffer storage instead of JSON arrays
 3. **Non-manifold Support**: Explicit handling of non-manifold geometry
 4. **Attribute Rich**: Comprehensive attribute support at all topology levels
-5. **glTF 2.0 Native**: Follows EXT_structural_metadata patterns and naming conventions
+5. **glTF 2.0 Native**: Follows glTF buffer patterns and naming conventions
 6. **Backward Compatible**: Falls back gracefully to triangle fan reconstruction
 
 ## Algorithm Details
@@ -268,8 +273,10 @@ function encodeBmeshImplicit(bmeshFaces) {
   return triangles;
 }
 
-// Property table-based BMesh reconstruction
-function decodeBmeshFromPropertyTables(gltfData) {
+// The encoding is the function inverse of decodeBmeshFromBuffers.
+
+// Buffer-based BMesh reconstruction
+function decodeBmeshFromBuffers(gltfData) {
   const bmesh = {
     vertices: new Map(),
     edges: new Map(),
@@ -277,116 +284,113 @@ function decodeBmeshFromPropertyTables(gltfData) {
     faces: new Map(),
   };
 
-  const ext = gltfData.extensions.EXT_structural_metadata;
-  const propertyTables = ext.propertyTables;
+  const ext = gltfData.extensions.EXT_bmesh_encoding;
+  const buffers = gltfData.buffers;
+  const bufferViews = gltfData.bufferViews;
 
-  // Find BMesh property tables
-  const vertexTable = propertyTables.find(t => t.class === 'vertex');
-  const edgeTable = propertyTables.find(t => t.class === 'edge');
-  const loopTable = propertyTables.find(t => t.class === 'loop');
-  const faceTable = propertyTables.find(t => t.class === 'face');
-
-  // Reconstruct vertices from property table
-  if (vertexTable) {
-    const positions = readPropertyTableValues(gltfData, vertexTable.properties.position);
-    for (let i = 0; i < vertexTable.count; i++) {
-      bmesh.vertices.set(i, {
-        id: i,
-        position: [
-          positions[i * 3],
-          positions[i * 3 + 1],
-          positions[i * 3 + 2],
-        ],
-        edges: [],
-        attributes: {},
-      });
-    }
+  // Reconstruct vertices from buffer data
+  const vertexPositions = readBufferView(
+    buffers,
+    bufferViews,
+    ext.vertices.positions
+  );
+  for (let i = 0; i < ext.vertices.count; i++) {
+    bmesh.vertices.set(i, {
+      id: i,
+      position: [
+        vertexPositions[i * 3],
+        vertexPositions[i * 3 + 1],
+        vertexPositions[i * 3 + 2],
+      ],
+      edges: [],
+      attributes: {},
+    });
   }
 
-  // Reconstruct edges from property table
-  if (edgeTable) {
-    const vertex0s = readPropertyTableValues(gltfData, edgeTable.properties.vertex0);
-    const vertex1s = readPropertyTableValues(gltfData, edgeTable.properties.vertex1);
-    const manifoldFlags = readPropertyTableValues(gltfData, edgeTable.properties.manifoldStatus);
+  // Reconstruct edges from buffer data
+  const edgeVertices = readBufferView(buffers, bufferViews, ext.edges.vertices);
+  const manifoldFlags = readBufferView(
+    buffers,
+    bufferViews,
+    ext.edges.manifold
+  );
 
-    for (let i = 0; i < edgeTable.count; i++) {
-      const edge = {
-        id: i,
-        vertices: [vertex0s[i], vertex1s[i]],
-        faces: [],
-        manifold:
-          manifoldFlags[i] === 1 ? true : manifoldFlags[i] === 0 ? false : null,
-        attributes: {},
-      };
-      bmesh.edges.set(i, edge);
-    }
+  for (let i = 0; i < ext.edges.count; i++) {
+    const edge = {
+      id: i,
+      vertices: [edgeVertices[i * 2], edgeVertices[i * 2 + 1]],
+      faces: [],
+      manifold:
+        manifoldFlags[i] === 1 ? true : manifoldFlags[i] === 0 ? false : null,
+      attributes: {},
+    };
+    bmesh.edges.set(i, edge);
   }
 
-  // Reconstruct loops from property table
-  if (loopTable) {
-    const vertices = readPropertyTableValues(gltfData, loopTable.properties.vertex);
-    const edges = readPropertyTableValues(gltfData, loopTable.properties.edge);
-    const faces = readPropertyTableValues(gltfData, loopTable.properties.face);
-    const nexts = readPropertyTableValues(gltfData, loopTable.properties.next);
-    const prevs = readPropertyTableValues(gltfData, loopTable.properties.prev);
-    const radialNexts = readPropertyTableValues(gltfData, loopTable.properties.radialNext);
-    const radialPrevs = readPropertyTableValues(gltfData, loopTable.properties.radialPrev);
+  // Reconstruct loops from SOA buffer data
+  const loopVertex = readBufferView(buffers, bufferViews, ext.loops.topology_vertex);
+  const loopEdge = readBufferView(buffers, bufferViews, ext.loops.topology_edge);
+  const loopFace = readBufferView(buffers, bufferViews, ext.loops.topology_face);
+  const loopNext = readBufferView(buffers, bufferViews, ext.loops.topology_next);
+  const loopPrev = readBufferView(buffers, bufferViews, ext.loops.topology_prev);
+  const loopRadialNext = readBufferView(buffers, bufferViews, ext.loops.topology_radial_next);
+  const loopRadialPrev = readBufferView(buffers, bufferViews, ext.loops.topology_radial_prev);
 
-    for (let i = 0; i < loopTable.count; i++) {
-      bmesh.loops.set(i, {
-        id: i,
-        vertex: vertices[i],
-        edge: edges[i],
-        face: faces[i],
-        next: nexts[i],
-        prev: prevs[i],
-        radial_next: radialNexts[i],
-        radial_prev: radialPrevs[i],
-        attributes: {},
-      });
-    }
+  for (let i = 0; i < ext.loops.count; i++) {
+    bmesh.loops.set(i, {
+      id: i,
+      vertex: loopVertex[i],
+      edge: loopEdge[i],
+      face: loopFace[i],
+      next: loopNext[i],
+      prev: loopPrev[i],
+      radial_next: loopRadialNext[i],
+      radial_prev: loopRadialPrev[i],
+      attributes: {},
+    });
   }
 
-  // Reconstruct faces from property table
-  if (faceTable) {
-    const faceVertices = readPropertyTableValues(gltfData, faceTable.properties.vertices);
-    const faceOffsets = readPropertyTableValues(gltfData, faceTable.properties.offsets);
-    const faceNormals = readPropertyTableValues(gltfData, faceTable.properties.normals);
+  // Reconstruct faces from buffer data
+  const faceVertices = readBufferView(buffers, bufferViews, ext.faces.vertices);
+  const faceOffsets = readBufferView(buffers, bufferViews, ext.faces.offsets);
+  const faceNormals = readBufferView(buffers, bufferViews, ext.faces.normals);
 
-    for (let i = 0; i < faceTable.count; i++) {
-      const vertexStart = faceOffsets[i * 3];
-      const vertexEnd = faceOffsets[i * 3 + 1];
+  for (let i = 0; i < ext.faces.count; i++) {
+    const vertexStart = faceOffsets[i * 3];
+    const vertexEnd = faceOffsets[i * 3 + 1];
 
-      const face = {
-        id: i,
-        vertices: faceVertices.slice(vertexStart, vertexEnd),
-        edges: [],
-        loops: [],
-        normal: [
-          faceNormals[i * 3],
-          faceNormals[i * 3 + 1],
-          faceNormals[i * 3 + 2],
-        ],
-        attributes: {},
-      };
-      bmesh.faces.set(i, face);
-    }
+    const face = {
+      id: i,
+      vertices: faceVertices.slice(vertexStart, vertexEnd),
+      edges: [],
+      loops: [],
+      normal: [
+        faceNormals[i * 3],
+        faceNormals[i * 3 + 1],
+        faceNormals[i * 3 + 2],
+      ],
+      attributes: {},
+    };
+    bmesh.faces.set(i, face);
   }
 
   return bmesh;
 }
 
-function readPropertyTableValues(gltfData, propertyRef) {
-  // Implementation would read from glTF buffers based on property reference
-  // This is a simplified placeholder
-  return [];
+function readBufferView(buffers, bufferViews, bufferViewIndex) {
+  const bufferView = bufferViews[bufferViewIndex];
+  const buffer = buffers[bufferView.buffer];
+  return new Uint32Array(
+    buffer,
+    bufferView.byteOffset,
+    bufferView.byteLength / 4
+  );
 }
 ```
 
 ## glTF Schema
 
-- **JSON schema**: `glTF.EXT_structural_metadata.bmesh.schema.json`
-- **Example schema**: `bmesh_schema_example.json`
+- **JSON schema**: [glTF.EXT_bmesh_encoding.schema.json](schema/glTF.EXT_bmesh_encoding.schema.json)
 
 ## Known Implementations
 
@@ -395,19 +399,19 @@ function readPropertyTableValues(gltfData, propertyRef) {
 
 ## BMesh Data Structures
 
-The following BMesh structures are preserved through property table encoding:
+The following BMesh structures are preserved through buffer-based encoding:
 
 ### Vertex
 
-- **Position**: 3D coordinates (x, y, z) stored in `position` property
-- **Connected Edges**: Edge adjacency data in variable-length `connectedEdges` property
+- **Position**: 3D coordinates (x, y, z) stored in `positions` buffer view
+- **Connected Edges**: Edge adjacency data in variable-length format
 - **Attributes**: Standard glTF attributes (POSITION, NORMAL, TEXCOORD_0, etc.)
 
 ### Edge
 
-- **Vertices**: Two vertex references stored as `vertex0`, `vertex1` properties
-- **Adjacent Faces**: Variable-length face index arrays in `adjacentFaces` property
-- **Manifold Status**: Single byte flag in `manifoldStatus` property
+- **Vertices**: Two vertex references stored as `[u32, u32]` pairs
+- **Adjacent Faces**: Variable-length face lists with offset indexing
+- **Manifold Status**: Single byte flag compatible with EXT_mesh_manifold
   - `0`: Confirmed non-manifold
   - `1`: Confirmed manifold (oriented 2-manifold)
   - `255`: Unknown status (no manifold checking performed)
@@ -415,19 +419,19 @@ The following BMesh structures are preserved through property table encoding:
 
 ### Loop
 
-- **Vertex**: Corner vertex reference in `vertex` property
-- **Edge**: Outgoing edge from vertex in `edge` property
-- **Face**: Containing face reference in `face` property
-- **Navigation**: Next/previous loop in face in `next`/`prev` properties, radial next/previous around edge in `radialNext`/`radialPrev` properties
-- **Topology**: All navigation stored as separate properties per loop
+- **Vertex**: Corner vertex reference
+- **Edge**: Outgoing edge from vertex
+- **Face**: Containing face reference
+- **Navigation**: Next/previous loop in face, radial next/previous around edge
+- **Topology**: All navigation stored as 7×u32 array per loop
 - **Attributes**: Per-corner data using glTF naming (TEXCOORD_0, COLOR_0, etc.)
 
 ### Face
 
-- **Vertices**: Variable-length vertex index arrays in `vertices` property
-- **Edges**: Variable-length edge index arrays in `edges` property
-- **Loops**: Variable-length loop index arrays in `loops` property
-- **Normal**: Face normal vector in `normal` property
+- **Vertices**: Variable-length vertex index lists with offset indexing
+- **Edges**: Variable-length edge index lists with offset indexing
+- **Loops**: Variable-length loop index lists with offset indexing
+- **Normal**: Face normal vector stored as Vec3<f32>
 - **Attributes**: Custom face data with `_` prefix naming
 
 ### Topological Relationships
@@ -437,8 +441,8 @@ The following BMesh structures are preserved through property table encoding:
 - **Face-Loop**: One-to-many (face has loops for each corner)
 - **Loop Navigation**: Circular lists around faces and radially around edges
 
-## No Per-Face Materials
+## Design Decision: No Per-Face Materials
 
-Per-face materials were considered and intentionally excluded from EXT_structural_metadata BMesh implementation.
+Per-face materials were considered and intentionally excluded from EXT_bmesh_encoding.
 
-EXT_structural_metadata focuses purely on **topology preservation** rather than solving the material assignment problem, which is better handled at the glTF primitive and node levels.
+EXT_bmesh_encoding focuses purely on **topology preservation** rather than solving the material assignment problem, which is better handled at the glTF primitive and node levels.
