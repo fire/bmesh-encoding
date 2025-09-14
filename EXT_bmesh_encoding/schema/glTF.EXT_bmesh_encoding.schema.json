@@ -34,8 +34,7 @@
                             "allOf": [{"$ref": "glTFid.schema.json"}]
                         }
                     },
-                    "additionalProperties": false,
-                    "description": "Standard glTF vertex attributes plus optional EXT_bmesh_encoding specific custom attributes"
+                    "additionalProperties": false
                 }
             },
             "required": ["count", "positions"]
