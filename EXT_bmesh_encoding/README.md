@@ -4,7 +4,7 @@
 
 - K. S. Ernest (iFire) Lee, Individual Contributor / https://github.com/fire
 - Based on principles from FB_ngon_encoding by Pär Winzell and Michael Bunnell (Facebook)
-- Subdivision surface specification contributions by Nick Porcino - https://github.com/meshula
+- Subdivision surface specification contributions by Nick Porcino, Individual Contributor - https://github.com/meshula
 
 ## Status
 
