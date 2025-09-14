@@ -4,6 +4,7 @@
 
 - K. S. Ernest (iFire) Lee, Individual Contributor / https://github.com/fire
 - Based on principles from FB_ngon_encoding by Pär Winzell and Michael Bunnell (Facebook)
+- Subdivision surface specification contributions by Nick Porcino - https://github.com/meshula
 
 ## Status
 
@@ -32,6 +33,17 @@ The `EXT_bmesh_encoding` glTF extension solves the problem of topological data l
 What makes BMesh so powerful is its ability to represent complex, **non-manifold** geometry. Unlike mesh formats that limit an edge to connecting only two faces, BMesh uses a system of **radial loops** (`radial_next` and `radial_prev` pointers). This is like a book spine that can connect every single page, not just the two covers.
 
 `EXT_bmesh_encoding` allows for the preservation of models where multiple faces meet at a single edge, ensuring the artist's intent is maintained.
+
+### Subdivision Surface Support
+
+Building on the minimal OpenSubdiv requirements, EXT_bmesh_encoding integrates subdivision surface data directly into the BMesh structure using attributes:
+
+- **Edge Creases**: Stored as `CREASE` attribute on edges (f32 sharpness value per edge)
+- **Vertex Creases**: Stored as `CREASE` attribute on vertices (f32 sharpness value per vertex)
+- **Holes**: Stored as `HOLES` attribute on faces (u8 flag, 1=holes, 0=regular faces)
+- **Face Topology**: Complete face connectivity preserved in BMesh structure
+
+This approach follows BMesh philosophy by storing subdivision data as attributes on topological elements, enabling direct compatibility with OpenSubdiv and other subdivision surface implementations while maintaining clean integration with the mesh topology.
 
 ## Key Features
 
@@ -406,6 +418,7 @@ The following BMesh structures are preserved through buffer-based encoding:
 - **Position**: 3D coordinates (x, y, z) stored in `positions` buffer view
 - **Connected Edges**: Edge adjacency data in variable-length format
 - **Attributes**: Standard glTF attributes (POSITION, NORMAL, TEXCOORD_0, etc.)
+- **Subdivision Attributes**: `CREASE` (f32 sharpness for subdivision creases)
 
 ### Edge
 
@@ -416,6 +429,7 @@ The following BMesh structures are preserved through buffer-based encoding:
   - `1`: Confirmed manifold (oriented 2-manifold)
   - `255`: Unknown status (no manifold checking performed)
 - **Attributes**: Custom edge data with `_` prefix naming
+- **Subdivision Attributes**: `CREASE` (f32 sharpness for subdivision creases)
 
 ### Loop
 
@@ -433,6 +447,7 @@ The following BMesh structures are preserved through buffer-based encoding:
 - **Loops**: Variable-length loop index lists with offset indexing
 - **Normal**: Face normal vector stored as Vec3<f32>
 - **Attributes**: Custom face data with `_` prefix naming
+- **Subdivision Attributes**: `HOLES` (u8 flag, 1=holes, 0=regular faces)
 
 ### Topological Relationships
 

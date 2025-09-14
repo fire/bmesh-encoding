@@ -30,7 +30,7 @@
                     "type": "object",
                     "description": "Buffer views for vertex attributes",
                     "patternProperties": {
-                        "^(POSITION|NORMAL|TANGENT|COLOR_[0-9]+|TEXCOORD_[0-9]+|JOINTS_[0-9]+|WEIGHTS_[0-9]+|_[A-Z_][A-Z0-9_]*)$": {
+                        "^(POSITION|NORMAL|TANGENT|COLOR_[0-9]+|TEXCOORD_[0-9]+|JOINTS_[0-9]+|WEIGHTS_[0-9]+|CREASE)$": {
                             "allOf": [{"$ref": "glTFid.schema.json"}]
                         }
                     },
@@ -65,7 +65,7 @@
                     "type": "object",
                     "description": "Buffer views for edge attributes",
                     "patternProperties": {
-                        "^_[A-Z_][A-Z0-9_]*$": {
+                        "^(CREASE)$": {
                             "allOf": [{"$ref": "glTFid.schema.json"}]
                         }
                     }
@@ -114,7 +114,7 @@
                     "type": "object",
                     "description": "Buffer views for loop attributes (follows glTF 2.0 attribute naming)",
                     "patternProperties": {
-                        "^(TEXCOORD_[0-9]+|COLOR_[0-9]+|_[A-Z_][A-Z0-9_]*)$": {
+                        "^(TEXCOORD_[0-9]+|COLOR_[0-9]+)$": {
                             "allOf": [{"$ref": "glTFid.schema.json"}]
                         }
                     }
@@ -155,7 +155,7 @@
                     "type": "object",
                     "description": "Buffer views for face attributes",
                     "patternProperties": {
-                        "^_[A-Z_][A-Z0-9_]*$": {
+                        "^(HOLES)$": {
                             "allOf": [{"$ref": "glTFid.schema.json"}]
                         }
                     }
