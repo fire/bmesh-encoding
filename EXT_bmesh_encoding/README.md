@@ -245,7 +245,6 @@ All BMesh topology data is stored in glTF buffers using efficient binary layouts
   - `0`: Confirmed non-manifold
   - `1`: Confirmed manifold
   - `255`: Unknown status
-- **attributes**: Custom edge data with `_` prefix naming
 
 ### Loop Buffers
 
@@ -265,7 +264,6 @@ All BMesh topology data is stored in glTF buffers using efficient binary layouts
 - **loops**: Variable-length loop index lists
 - **offsets**: `[u32; 3]` (12 bytes per face) - start offsets for vertices, edges, loops arrays
 - **normals**: `Vec3<f32>` (12 bytes per face) - face normal vectors
-- **attributes**: Custom face data with `_` prefix naming
 
 ### Variable-Length Array Encoding
 
