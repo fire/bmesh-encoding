@@ -163,16 +163,19 @@ The EXT_bmesh_encoding extension integrates seamlessly into glTF 2.0 primitives,
 ### Key Features in Maximal Structure
 
 **OpenSubdiv Subdivision Surface Integration:**
+
 - **Vertex CREASE** (buffer view 12): f32 sharpness values for subdivision creases
-- **Edge CREASE** (buffer view 16): f32 sharpness values for edge creases  
+- **Edge CREASE** (buffer view 16): f32 sharpness values for edge creases
 - **Face HOLES** (buffer view 31): u8 flags (1=holes, 0=regular faces)
 
 **Complete BMesh Topology:**
+
 - Full SOA (Struct of Arrays) topology storage for vertices, edges, loops, faces
 - Variable-length arrays with offset indexing for face connectivity
 - Non-manifold support via manifold flags and radial navigation
 
 **Standard glTF Attributes:**
+
 - POSITION, NORMAL, TANGENT for vertices
 - TEXCOORD_0, COLOR_0 for loops (per-corner attributes)
 - JOINTS_0, WEIGHTS_0 for skinning
@@ -403,13 +406,41 @@ function decodeBmeshFromBuffers(gltfData) {
   }
 
   // Reconstruct loops from SOA buffer data
-  const loopVertex = readBufferView(buffers, bufferViews, ext.loops.topology_vertex);
-  const loopEdge = readBufferView(buffers, bufferViews, ext.loops.topology_edge);
-  const loopFace = readBufferView(buffers, bufferViews, ext.loops.topology_face);
-  const loopNext = readBufferView(buffers, bufferViews, ext.loops.topology_next);
-  const loopPrev = readBufferView(buffers, bufferViews, ext.loops.topology_prev);
-  const loopRadialNext = readBufferView(buffers, bufferViews, ext.loops.topology_radial_next);
-  const loopRadialPrev = readBufferView(buffers, bufferViews, ext.loops.topology_radial_prev);
+  const loopVertex = readBufferView(
+    buffers,
+    bufferViews,
+    ext.loops.topology_vertex
+  );
+  const loopEdge = readBufferView(
+    buffers,
+    bufferViews,
+    ext.loops.topology_edge
+  );
+  const loopFace = readBufferView(
+    buffers,
+    bufferViews,
+    ext.loops.topology_face
+  );
+  const loopNext = readBufferView(
+    buffers,
+    bufferViews,
+    ext.loops.topology_next
+  );
+  const loopPrev = readBufferView(
+    buffers,
+    bufferViews,
+    ext.loops.topology_prev
+  );
+  const loopRadialNext = readBufferView(
+    buffers,
+    bufferViews,
+    ext.loops.topology_radial_next
+  );
+  const loopRadialPrev = readBufferView(
+    buffers,
+    bufferViews,
+    ext.loops.topology_radial_prev
+  );
 
   for (let i = 0; i < ext.loops.count; i++) {
     bmesh.loops.set(i, {
